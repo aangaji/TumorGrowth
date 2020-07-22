@@ -1,0 +1,62 @@
+export birth_death_pushing_3D
+
+#function for creating a new cell and moving all other cells accordingly to avoid overlapping
+function birth_pushing_3D!(tumor::DataFrame, cell::DataFrameRow, index::Int64, current_mut::Int64, mutation_rate::Float64, cellbox)
+
+    position_new_cell = [0.0, 0.0, 0.0] #Initialize the new position
+
+    δ = rand(3) .- 0.5
+    position_new_cell = cell[:position] + 2 .* δ/norm(δ)
+    push!(cellbox, pos2box.(position_new_cell))
+
+    new_b = cell[:birth_rate]
+    new_d = cell[:death_rate]
+    new_mutations = copy(cell[:mutations])
+
+    push!(tumor, [index, position_new_cell, new_b, new_d, cell[:index], new_mutations])
+
+    if rand() < mutation_rate
+        push!(tumor.mutations[end], current_mut+1)
+        return current_mut, position_new_cell
+    end
+end
+
+function birth_death_pushing_3D(; tumor_size::Int64, b::Float64, d::Float64, mu::Float64)
+    cells = DataFrame([[1], [[0.0,0.0,0.0]], [b], [d], [0], [Int[]]], [:index, :position, :birth_rate, :death_rate, :parental, :mutations]) #DataFrame to save all relevant information about the single cells
+    last_index = 1
+    cur_mutation = 0
+
+    mutation_events = DataFrame([Int[],Vector{Vector{Float64}}(undef,0)], [:mutation_number, :appearing_position])
+
+    N = size(cells, 1)
+    cellbox = Vector{Vector{Tuple{Int64,Int64}}}(undef, N)
+    for (i,p) in enumerate(cells.position)
+        cellbox[i] = pos2box.(p)
+    end
+
+    while length(cells[:,1]) < tumor_size
+        isempty(cells) && return "Tumor died"
+        row_number_chosen_cell = rand(1:size(cells, 1)) #chose randomly the row number (NOT index!) of the parental cell
+        chosen_cell = cells[row_number_chosen_cell, :] #get the specific cell from the DataFrame
+        b_rate = chosen_cell[:birth_rate]
+        d_rate = chosen_cell[:death_rate]
+        b_prob = b_rate/(b_rate+d_rate) #probability from the rate
+
+        if rand() <= b_prob
+            last_index = last_index .+ 1 #add a new index
+            N += 1
+            mutation_event = birth_pushing_3D!(cells, chosen_cell, last_index, cur_mutation, mu, cellbox)
+
+            if !isnothing(mutation_event)
+                cur_mutation += 1
+                push!(mutation_events, mutation_event)
+            end
+            pushing!(cells, N, cellbox)
+        else
+            N -= 1
+            delete!(cells, row_number_chosen_cell)
+        end
+        print("Progress: $(size(cells,1))/$tumor_size | Recent mutation: $cur_mutation \r")
+    end
+    return cells, mutation_events
+end
