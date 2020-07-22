@@ -61,7 +61,7 @@ function pushing_recursive!(tumor, root, cellbox)
         d = norm(r1.-r2)
         if d < 2.
             r2 .+= (r2.-r1)*(2.1/d - 1)
-            cellbox[n] = pos2box(r2)
+            cellbox[n] = pos2box.(r2)
             tumor.position[n] = r2
             pushing_recursive!(tumor, n, cellbox)
         end
