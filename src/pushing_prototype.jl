@@ -1,8 +1,3 @@
-function circle(x,y)
-    theta = LinRange(0, 2*pi, 30)
-    return x .+ sin.(theta), y .+ cos.(theta)
-end
-
 function plot_tumor_2d(tumor; annotate = true)
     fig = Plots.plot()
     for (i,p) in enumerate(tumor.position)

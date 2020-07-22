@@ -1,35 +1,35 @@
-export plotting_normal, plotting_colored_mutations, plotting_normal_3D, plotting_pushing_colored_mutations_3D
+export plotting_normal, plotting_normal!, plotting_colored_mutations, plotting_normal_3D, plotting_pushing_colored_mutations_3D
 
 #function to create circles in a 2D plot (here: cells with radius r)
 function circle(pos_x, pos_y, r)
-    theta = LinRange(0, 2*pi, 500)
+    theta = LinRange(0, 2*pi, 20)
     return pos_x .+ r*sin.(theta), pos_y .+ r*cos.(theta)
 end
 
 #function to create spheres in a 3D plot (here: cells with radius r)
 function sphere(pos_x, pos_y, pos_z, r)
-    theta = LinRange(0, 2*pi, 500)
-    phi = LinRange(0, pi, 500)
+    theta = LinRange(0, 2*pi, 20)
+    phi = LinRange(0, pi, 20)
     return pos_x .+ r*sin.(theta).*cos.(phi), pos_y .+ r*sin.(theta).*sin.(phi), pos_z .+ r*cos.(theta)
 end
 
 findfirst(isequal(1), [2,5,3])
 
 #function to plot a tumor with each mutation colored differently
-function plotting_normal(data::DataFrame; path="", annotate=true)
+function plotting_normal!(p, data::DataFrame; path="", annotate=false, color=nothing)
 
     pos = data.position
     color_scheme = palette(:tab10)
-    p = plot()
-
+    choose_color = false
+    isnothing(color) && (choose_color=true)
     for (i,mut) in enumerate(data.mutations)
         color_choice = 1
         if ! isempty(mut)
             color_choice = mod(maximum(mut), 10)+1 #choose a different color for each mutation out of a colorset with 10 colors
             annotate && annotate!(pos[i]..., text(mut[1], 5, :black)) #annotate the number of the first mutation to each cell
         end
-        plot!(p, circle(pos[i]..., r0), seriestype = [:shape,], lw = 0.5, c = color_scheme[color_choice], linecolor = :black, lab = :none, fillalpha = 0.5, aspect_ratio = 1) #plot the cell with its specific color choice
-        #scatter!(p, marker=(1, 0.5, color_scheme[color_choice]), lab = :none)
+        choose_color && (color = color_scheme[color_choice])
+        plot!(p, circle(pos[i]..., r0), seriestype = [:shape,], lw = 0.5, c = color, linecolor = :black, lab = :none, fillalpha = 0.5, aspect_ratio = 1) #plot the cell with its specific color choice
     end
     first = findfirst(isequal(1), data.index)
     if !isnothing(first)
@@ -38,6 +38,8 @@ function plotting_normal(data::DataFrame; path="", annotate=true)
     if !isempty(path) savefig("$(path).pdf") end
     return p
 end
+
+plotting_normal(data::DataFrame; path="", annotate=false) = plotting_normal!(plot(), data; path=path, annotate=annotate)
 
 #function to plot the tumor similar to Ling et al. (2015), color code in experiments
 function plotting_colored_mutations(data::DataFrame; path="")
