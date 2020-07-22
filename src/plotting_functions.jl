@@ -16,27 +16,23 @@ end
 #function to plot a tumor with each mutation colored differently
 function plotting_normal(data::DataFrame; path="", annotate=true)
 
-    positions = data[!, :position]
-    mutations = data[!, :mutations]
-
-    x = [r[1] for r in positions]
-    y = [r[2] for r in positions]
+    pos = data.position
 
     color_scheme = palette(:tab10)
     Plots.gr()
     p = Plots.plot()
 
-    for i in 2:length(x)
+    for (i,mut) in enumerate(data.mutations)
         color_choice = 1
-        if ! isempty(mutations[i])
-            color_choice = mod(maximum(mutations[i]), 10)+1 #choose a different color for each mutation out of a colorset with 10 colors
-            annotate && annotate!(x[i], y[i], Plots.text(mutations[i][1], 5, :black)) #annotate the number of the first mutation to each cell
+        if ! isempty(mut)
+            color_choice = mod(maximum(mut), 10)+1 #choose a different color for each mutation out of a colorset with 10 colors
+            annotate && annotate!(pos[i]..., Plots.text(mut[1], 5, :black)) #annotate the number of the first mutation to each cell
         end
-        Plots.plot!(p, circle(x[i], y[i], r0), seriestype = [:shape,], lw = 0.5, c = color_scheme[color_choice], linecolor = :black, legend = false, fillalpha = 0.5, aspect_ratio = 1) #plot the cell with its specific color choice
+        Plots.plot!(p, circle(pos[i]..., r0), seriestype = [:shape,], lw = 0.5, c = color_scheme[color_choice], linecolor = :black, legend = false, fillalpha = 0.5, aspect_ratio = 1) #plot the cell with its specific color choice
         #Plots.scatter!(p, marker=(1, 0.5, color_scheme[color_choice]), legend = false)
     end
 
-    Plots.plot!(p, circle(x[1], y[1], r0), seriestype = [:shape,], lw = 0.5, c = :yellow, linecolor = :black, legend = false, fillalpha = 1.0, aspect_ratio = 1) #plot the start cell (lowest index) with yellow filling
+    Plots.plot!(p, circle(pos[1]..., r0), seriestype = [:shape,], lw = 0.5, c = :yellow, linecolor = :black, legend = false, fillalpha = 1.0, aspect_ratio = 1) #plot the start cell (lowest index) with yellow filling
 
     if !isempty(path) savefig("$(path).pdf") end
     return p
@@ -105,20 +101,15 @@ end
 #function to plot a tumor with color determined by the latest mutation of the cell
 function plotting_normal_3D(data::DataFrame; path="")
 
-    positions = data[!, :position]
-    mutations = data[!, :mutations]
+    p = [getindex.(data.position, i) for i=1:3]
 
-    x = Float64[r[1] for r in positions]
-    y = Float64[r[2] for r in positions]
-    z = Float64[r[3] for r in positions]
+    color_choice = ones(Int64, size(data,1))
 
-    color_choice = ones(Int64, length(x))
-
-    for (i,mut) in enumerate(mutations)
+    for (i,mut) in enumerate(data.mutations)
         if ! isempty(mut) color_choice[i] = mod(mut[end], 68)+1 end #choose a different color for each mutation out of a colorset with 35 colors
     end
 
-    scene = meshscatter(x, y, z, markersize = 1.0, color = color_choice, colormap=distinguishable_colors(68)) #plot the cell with its specific color choice
+    scene = meshscatter(p..., markersize = 1.0, color = color_choice, colormap=distinguishable_colors(68)) #plot the cell with its specific color choice
 
     if !isempty(path) save("$(path).jpg") end
     return scene
