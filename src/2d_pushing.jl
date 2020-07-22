@@ -27,34 +27,32 @@ function birth_death_pushing(; tumor_size::Int64, b::Float64, d::Float64, mu::Fl
     mutation_events = DataFrame([Int[],Vector{Vector{Float64}}(undef,0)], [:mutation_number, :appearing_position])
 
     N = size(cells, 1)
-    cellbox = Vector{Vector{Tuple{Int64,Int64}}}(undef, N)
-    for (i,p) in enumerate(cells.position)
-        cellbox[i] = pos2box.(p)
-    end
+    cellbox = [pos2box.(p) for p in cells.position]
 
-    while N < tumor_size
-            isempty(cells) && return "Tumor died"
-            row_number_chosen_cell = rand(1:N) #chose randomly the row number (NOT index!) of the parental cell
-            chosen_cell = cells[row_number_chosen_cell, :] #get the specific cell from the DataFrame
-            b_rate = chosen_cell[:birth_rate]
-            d_rate = chosen_cell[:death_rate]
-            b_prob = b_rate/(b_rate+d_rate) #probability from the rate
+    Juno.progress() do id
+        while N < tumor_size
+                N==0 && return "Tumor died"
+                row_number_chosen_cell = rand(1:N) #chose randomly the row number (NOT index!) of the parental cell
+                chosen_cell = cells[row_number_chosen_cell, :] #get the specific cell from the DataFrame
 
-            if rand() <= b_prob
-                last_index = last_index .+ 1 #add a new index
-                N += 1
-                mutation_event = birth_pushing!(cells, chosen_cell, last_index, cur_mutation, mu, cellbox)
+                b_prob = 1/(1 + chosen_cell.death_rate/chosen_cell.birth_rate) #probability from the rate
+                if rand() <= b_prob
+                    last_index = last_index .+ 1 #add a new index
+                    N += 1
+                    mutation_event = birth_pushing!(cells, chosen_cell, last_index, cur_mutation, mu, cellbox)
 
-                if !isnothing(mutation_event)
-                    cur_mutation += 1
-                    push!(mutation_events, mutation_event)
+                    if !isnothing(mutation_event)
+                        cur_mutation += 1
+                        push!(mutation_events, mutation_event)
+                    end
+                    pushing!(cells, N, cellbox)
+                else
+                    N -= 1
+                    delete!(cells, row_number_chosen_cell)
                 end
-                pushing!(cells, N, cellbox)
-            else
-                N -= 1
-                delete!(cells, row_number_chosen_cell)
-            end
-        print("Progress: $(size(cells,1))/$tumor_size | Recent mutation: $cur_mutation \r")
+            #print("Progress: $(size(cells,1))/$tumor_size | Recent mutation: $cur_mutation \r")
+            @info "Tumor size" progress=N/tumor_size _id=id
+        end
     end
     return cells, mutation_events
 end

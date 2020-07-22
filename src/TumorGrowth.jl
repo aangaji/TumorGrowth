@@ -8,6 +8,7 @@ using Plots
 using Makie: meshscatter, text!, save
 using LinearAlgebra
 using Random
+using Juno
 println("Done!")
 end
 
