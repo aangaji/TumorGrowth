@@ -8,7 +8,7 @@ using Revise
 #########################
 
 @time a = birth_death_space_restricted(tumor_size=1000, b=0.3, d=0.1, mu=0.1)
-@time a = birth_death_pushing(tumor_size=3000, b=0.3, d=0.0, mu=0.1)
+@time a = birth_death_pushing(tumor_size=3000, b=0.3, d=0.1, mu=0.1)
 plotting_2d(a[1]; annotate = false)
 plotting(a[1])
 
@@ -61,3 +61,9 @@ cross_section(b; y=5., width=3.) |> data -> plotting!(scene, data; color=:black)
 ########################
 ####### Analysis #######
 ########################
+
+b = data_import("test_set_3d.csv")
+
+b |> plotting_colored_mutations
+b.mutations |> allele_population
+b.mutations |> mutation_freqs

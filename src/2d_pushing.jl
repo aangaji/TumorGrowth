@@ -23,10 +23,10 @@ function birth_death_pushing(; tumor_size::Int64, b::Float64, d::Float64, mu::Fl
     cells = DataFrame([[1], [[0.0,0.0]], [b], [d], [0], [Int[]]], [:index, :position, :birth_rate, :death_rate, :parental, :mutations]) #DataFrame to save all relevant information about the single cells
     last_index = 1
     cur_mutation = 0
+    N = size(cells, 1)
 
     mutation_events = DataFrame([Int[],Vector{Vector{Float64}}(undef,0)], [:mutation_number, :appearing_position])
 
-    N = size(cells, 1)
     cellbox = [pos2box.(p) for p in cells.position]
 
     #Juno.progress() do id
@@ -50,6 +50,7 @@ function birth_death_pushing(; tumor_size::Int64, b::Float64, d::Float64, mu::Fl
             else
                 N -= 1
                 delete!(cells, row_number_chosen_cell)
+                deleteat!(cellbox, row_number_chosen_cell)
             end
         #print("Progress: $(size(cells,1))/$tumor_size | Recent mutation: $cur_mutation \r")
         #@info "Tumor size" progress=N/tumor_size _id=id
