@@ -8,7 +8,8 @@ using Plots
 using Makie: Scene, meshscatter, meshscatter!, text!, save
 using LinearAlgebra
 using Random
-using Juno
+#using Juno
+using ProgressMeter
 println("Done!")
 end
 
@@ -20,9 +21,10 @@ end
     "2d_restricted.jl",
     "3d_pushing.jl",
     "3d_restricted.jl",
-    "plotting_functions.jl",
-    "sampling_functions.jl",
-    "pushing_prototype.jl"
+    "plotting.jl",
+    "sampling.jl",
+    "pushing_prototype.jl",
+    "analysis.jl"
 ) .|> include
 
 
