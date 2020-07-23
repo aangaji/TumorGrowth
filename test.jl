@@ -24,9 +24,9 @@ plotting(a[1])
 
 using DataFrames, CSV
 
-a = birth_death_pushing_3D(tumor_size=5000, b=0.3, d=0.0, mu=0.3)
-CSV.write("test_set_3d.csv", b, delim='\t')
-b = data_import("test_set_3d.csv")
+a = birth_death_pushing(tumor_size=5000, b=0.3, d=0.0, mu=0.3)
+CSV.write("test_set_2d.csv", a[1], delim='\t')
+b = data_import("test_set_2d.csv")
 @show b
 
 ########################
@@ -50,11 +50,11 @@ b = data_import("test_set_2d.csv")
 
 fig = b |> plotting_colored_mutations
 cross_section(b; x=10., width=3.) |> data -> plotting!(fig, data; color=:black)
-cross_section(b; y=25., width=3.) |> data -> plotting!(fig, data; color=:black)
+cross_section(b; y=25., width=3.) |> data -> plotting!(fig, data; color=:black, path="test_set_2d")
 
 b = data_import("test_set_3d.csv")
 scene = b |> plotting_colored_mutations
-cross_section(b; x=10., width=3.) |> data -> plotting!(scene, data; color=:black)
+cross_section(b; x=10., width=3.) |> data -> plotting!(scene, data; color=:black, path="test_set_3d")
 cross_section(b; y=5., width=3.) |> data -> plotting!(scene, data; color=:black)
 
 

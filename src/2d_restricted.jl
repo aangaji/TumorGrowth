@@ -6,19 +6,19 @@ function birth_space_restricted(all_cells::DataFrame, cell::DataFrameRow, curren
 
     #determine position
 
-    pos_change = false          ### RATHER change_pos
+    pos_change = false
     position_new_cell = [0.0, 0.0]
     count = 0
     count_max = 1#round(Int64, 0.1*steps)
 
-    while (pos_change == 0) & (count <= count_max)      ### RATHER !pos_change
+    while (pos_change == 0) & (count <= count_max)
 
         overlap = length(all_cells[!, :index]) #"negative" counter of the overlapping cells
 
         δ = 2 .* rand(2) .- 1 #normalized random vector
         δ = δ ./ norm(δ)
 
-        pos = cell[:position]           ### JUST cell[:position] + 2 .* δ
+        pos = cell[:position]
         position_new_cell = pos + 2 .* δ #position of the new cell at the surface of the parental cell randomly
 
         c_j = 0 #Index of the cell in the next loop
@@ -27,13 +27,11 @@ function birth_space_restricted(all_cells::DataFrame, cell::DataFrameRow, curren
 
             c_j += 1
 
-            energy = U(j, position_new_cell)            ### TRY TO RESTRICT TO CELLS WITHIN RANGE (COLLISION DETECTION)
-                                                        ### LENNARD JONES ALLOWS FOR SMALL OVERLAP/SQUEEZING BUT COMPUTATIONALLY COSTLY
+            energy = U(j, position_new_cell)
             if energy < 0
                 overlap -= 1
             else
-                nu = rand()         ### JUST rand()<exp...
-                if nu < exp(-energy/(kb*T)) #Monte Carlo like behavior (also allow small overlap of two cells -> squeezing in nature)
+                if rand() < exp(-energy/(kb*T)) #Monte Carlo like behavior (also allow small overlap of two cells -> squeezing in nature)
                     overlap -= 1
                 end
             end
@@ -56,10 +54,8 @@ function birth_space_restricted(all_cells::DataFrame, cell::DataFrameRow, curren
     new_d = cell[:death_rate]
     new_mutations = copy(cell[:mutations])
     mutation_event = [] #Array to save the mutation event positions -> Otherwise probably effects of algorithm on analyzed data!
-                ### THIS COULD BE AVOIDED MAYBE
-    r = rand()          ### JUST rand() < mut...
 
-    if r < mutation_rate
+    if rand() < mutation_rate
         current_mut += 1
 
         mutation_event = [current_mut, position_new_cell]

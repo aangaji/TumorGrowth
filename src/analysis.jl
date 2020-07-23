@@ -1,4 +1,4 @@
-export allele_population
+export allele_population, mutation_freqs
 
 function allele_population(mutations; skip=Int64[])
     muts = Array{Int64}(undef,0)
@@ -15,9 +15,3 @@ function mutation_freqs(mutations; skip=Int[])
     mut_counts = [count(isequal(m), muts) for m in sort(unique(muts)) ]
     return mut_counts./ length(mutations)
 end
-
-
-### VAF distribution
-# nBins = 50
-# hist = fit(Histogram, f_select, nbins=nBins, closed=:left)
-# bar(midpoints(hist.edges[1]), hist.weights, xlims=(0.,1.1), xlabel=:f)
