@@ -5,7 +5,7 @@ print("Loading Packages... ")
 using DataFrames
 using CSV
 using Plots
-using Makie: meshscatter, text!, save
+using Makie: Scene, meshscatter, meshscatter!, text!, save
 using LinearAlgebra
 using Random
 using Juno
