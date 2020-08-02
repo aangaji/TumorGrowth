@@ -1,4 +1,4 @@
-export cross_section
+export cross_section, radial_sample
 
 function cross_section(tumor; x=nothing, y=nothing, z=nothing, width = 2., reduce_dim=false)
     for (d,coord) in enumerate((x,y,z))
@@ -21,3 +21,5 @@ function reduce_dimension(position, d)
     select = mod.((d-1:2:d+1).-1, dim).+1 |> unique
     return getindex(position, select)
 end
+
+radial_sample(tumor; r=2., width=2.) = tumor[-width .< [sqrt(sum(p.^2)) for p in tumor.position] .- r .< width, :]

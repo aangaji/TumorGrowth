@@ -12,6 +12,7 @@ end
 
 function mutation_freqs(mutations; skip=Int[])
     muts = allele_population(mutations; skip=skip)
-    mut_counts = [count(isequal(m), muts) for m in sort(unique(muts)) ]
-    return mut_counts./ length(mutations)
+    mut_ids = sort(unique(muts))
+    mut_counts = [count(isequal(m), muts) for m in mut_ids ]
+    return mut_ids, mut_counts./ length(mutations)
 end

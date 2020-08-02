@@ -15,7 +15,7 @@ function pushing!(tumor, root, cellbox)
         root = popfirst!(queue)
         r1 = tumor.position[root]
 
-        for n in shuffle(find_neighbors(cellbox, root))
+        for n in shuffle!(find_neighbors(cellbox, root))
             r2 = tumor.position[n]
             d = norm(r1.-r2)
             if d < 2.
