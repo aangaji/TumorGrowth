@@ -7,17 +7,13 @@ using Revise
 ####### SIMULATION ######
 #########################
 
-@time a = birth_death_space_restricted(tumor_size=1000, b=0.3, d=0.1, mu=0.1)
-@time a = birth_death_pushing(tumor_size=3000, b=0.3, d=0.1, mu=0.1)
-plotting_2d(a[1]; annotate = false)
-plotting(a[1])
+@time (id, mut, t), tumor, mut_events = birth_death_pushing(2000; b=0.3, d=0.0, mu=0.1, dim=2)
+tumor = tumor |> DataFrame
 
-@time a = birth_death_space_restricted_3D(tumor_size=500, b=0.3, d=0.0, mu=0.3)
-@time a = birth_death_pushing_3D(tumor_size=3000, b=0.3, d=0.0, mu=0.3)
-plotting(a[1])
+plotting_2d(tumor; annotate = false)
+plotting_colored_mutations(tumor)
 
-@show a[1]
-
+@show tumor
 #########################
 ##### TUMOUR SAVING #####
 #########################

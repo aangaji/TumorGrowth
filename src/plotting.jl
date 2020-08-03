@@ -23,8 +23,8 @@ function plotting_2d!(p, data::DataFrame; path="", annotate=false, color=nothing
         plot!(p, circle(pos[i]..., r0), seriestype = [:shape,], lw = 0.5, c = color, linecolor = :black, lab = :none, fillalpha = 0.5, aspect_ratio = 1) #plot the cell with its specific color choice
     end
 
-    first = findfirst(isequal(1), data.index)
-    isnothing(first) || plot!(p, circle(pos[first]..., r0), seriestype = [:shape,], lw = 0.5, c = :black, linecolor = :black, lab = "first", fillalpha = 1.0, aspect_ratio = 1) #plot the start cell (lowest index) with black filling
+    first = findfirst(isequal(1), data.id)
+    isnothing(first) || plot!(p, circle(pos[first]..., r0), seriestype = [:shape,], lw = 0.5, c = :black, linecolor = :black, lab = "first", fillalpha = 1.0, aspect_ratio = 1) #plot the start cell (lowest id) with black filling
     isempty(path) || savefig("$(path).pdf")
     return p
 end
@@ -41,7 +41,7 @@ function plotting_2d_colored_mutations(data::DataFrame; path="")
         plot!(p, circle(data.position[i]..., r0), seriestype = [:shape,], lw = 0.5, c = color_scheme[color], linecolor = :black, lab=:none, fillalpha = 1.0, aspect_ratio = 1)
     end
 
-    first = findfirst(isequal(1), data.index)
+    first = findfirst(isequal(1), data.id)
     isnothing(first) || plot!(p, circle(data.position[first]..., r0), seriestype = [:shape,], lw = 0.5, c = :black, linecolor = :black, lab = "first", fillalpha = 1.0, aspect_ratio = 1)
 
     isempty(path) || savefig("$(path)_colored.pdf", p)
