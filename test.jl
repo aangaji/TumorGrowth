@@ -3,7 +3,6 @@ using Revise
 
 @time using TumorGrowth
 
-#########################
 ####### SIMULATION ######
 #########################
 
@@ -20,8 +19,8 @@ plotting_colored_mutations(tumor)
 
 using DataFrames, CSV
 
-a = birth_death_pushing(tumor_size=5000, b=0.3, d=0.0, mu=0.3)
-CSV.write("test_set_2d.csv", a[1], delim='\t')
+(id, mut, t), tumor, mut_events = birth_death_pushing(5000; b=0.3, d=0.0, mu=0.3, dim=2)
+CSV.write("test_set_2d.csv", DataFrame(tumor), delim='\t')
 b = data_import("test_set_2d.csv")
 @show b
 
