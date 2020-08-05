@@ -27,11 +27,12 @@ end
 function pushing_recursive!(tumor, root, cellbox)
     r1 = tumor[root].position
 
-    for n in shuffle(find_neighbors(cellbox, root))
+    N=length(tumor)
+    for n in shuffle!( (1:N)[find_neighbors(cellbox, root)] )
         r2 = tumor[n].position
         d = norm(r1.-r2)
         if d < 2.
-            r2 .+= (r2.-r1)*(2.1/d - 1)x
+            r2 .+= (r2.-r1)*(2.1/d - 1)
             cellbox[n] = pos2box.(r2)
             tumor[n].position = r2
             pushing_recursive!(tumor, n, cellbox)

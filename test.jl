@@ -3,10 +3,11 @@ using Revise
 
 @time using TumorGrowth
 
+#########################
 ####### SIMULATION ######
 #########################
 
-@time (id, mut, t), tumor, mut_events = birth_death_pushing(2000; b=0.3, d=0.0, mu=0.1, dim=2)
+@time (id, mut, t), tumor, mut_events = birth_death_pushing(5000; b=0.3, d=0.0, mu=0.1, dim=3)
 tumor = tumor |> DataFrame
 
 plotting_2d(tumor; annotate = false)

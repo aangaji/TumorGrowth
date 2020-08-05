@@ -2,7 +2,7 @@ module TumorGrowth
 
 begin
 print("Loading Packages... ")
-import DataFrames: DataFrame, DataFrameRow
+import DataFrames: DataFrame!, DataFrame
 using CSV
 using Plots
 using Makie: Scene, meshscatter, meshscatter!, text!, save
@@ -27,9 +27,9 @@ export data_import
 #function to import a saved tumor from a .csv file
 function data_import(path::String)
     data = DataFrame!(CSV.File(path))
-    data.position = data.position .|> Meta.parse .|> eval
-    data.p_birth = data.p_birth .|> Meta.parse .|> eval
-    data.mutations = data.mutations .|> Meta.parse .|> eval
+    for field in data |> names .|> Symbol
+        try data[!, field] = data[!, field] .|> Meta.parse .|> eval catch e end
+    end
     return data
 end
 

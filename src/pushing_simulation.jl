@@ -1,4 +1,4 @@
-export birth_death_pushing, birth_death_pushing!, DataFrame
+export birth_death_pushing, birth_death_pushing!, DataFrame!, DataFrame
 
 mutable struct Cell
     id :: Int64
@@ -16,13 +16,7 @@ struct Mutation_event
     p_birth :: Vector{Float64}
 end
 
-DataFrame(tumor::Vector{Cell}) = DataFrame(
-    id = getfield.(tumor, :id),
-    position = getfield.(tumor, :position),
-    mutations = getfield.(tumor, :mutations),
-    parent = getfield.(tumor, :parent),
-    t_birth = getfield.(tumor, :t_birth),
-    p_birth = getfield.(tumor, :p_birth) )
+DataFrame(tumor::Vector{T}) where T = DataFrame( [getfield.(tumor, field) for field in fieldnames(T)], collect(fieldnames(T)) )
 
 function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, mu, cellbox, t, dim)
 
@@ -40,7 +34,7 @@ function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, mu, cellbox, 
     end
 end
 
-function birth_death_pushing!( tumor::Vector{Cell}, mutation_events::Vector{Mutation_event}, tumor_size::Int64; b::Float64, d::Float64, mu::Float64, cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position))
+function birth_death_pushing!( tumor::Vector{Cell}, mutation_events::Vector{Mutation_event}, tumor_size; b, d, mu, cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position))
     N = length(tumor)
 
     cellbox = [pos2box.(p) for p in getfield.(tumor,:position)]
