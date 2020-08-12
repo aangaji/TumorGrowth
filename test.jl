@@ -29,11 +29,11 @@ b = data_import("test_set_2d.csv")
 ####### PLOTTING #######
 ########################
 
-b = data_import("test_set_3d.csv")
+b = data_import("test_2000_2d.csv")
 @time plotting(b)
 @time plotting_colored_mutations(b)
 
-b = data_import("test_set_2d.csv")
+b = data_import("test_5000_3d.csv")
 @time plotting_2d(b)
 @time plotting_2d_colored_mutations(b)
 
@@ -41,18 +41,16 @@ b = data_import("test_set_2d.csv")
 ####### Sampling #######
 ########################
 
-b = data_import("test_set_2d.csv")
+b = data_import("test_2000_2d.csv")
 
 fig = b |> plotting_colored_mutations
 cross_section(b; x=10., width=3.) |> data -> plotting!(fig, data; color=:black)
-cross_section(b; y=25., width=3.) |> data -> plotting!(fig, data; color=:black, path="test_set_2d")
+cross_section(b; y=25., width=3.) |> data -> plotting!(fig, data; color=:black)
+radial_sample(b; r=30., width=3.) |> data -> plotting!(fig, data; color=:black, path="test_2000_2d.png")
 
-fig = b |> plotting_colored_mutations
-radial_sample(b; r=60., width=3.) |> data -> plotting!(fig, data; color=:black)
-
-b = data_import("test_set_3d.csv")
+b = data_import("test_5000_3d.csv")
 scene = b |> plotting_colored_mutations
-cross_section(b; x=10., width=3.) |> data -> plotting!(scene, data; color=:black, path="test_set_3d")
+cross_section(b; x=10., width=3.) |> data -> plotting!(scene, data; color=:black, path="test_5000_3d.png")
 cross_section(b; y=5., width=3.) |> data -> plotting!(scene, data; color=:black)
 
 fig = cross_section(b; x=10., width=6.) |> plotting_colored_mutations
