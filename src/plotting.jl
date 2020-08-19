@@ -23,8 +23,8 @@ function plotting_2d!(p, data::DataFrame; path="", annotate=false, color=nothing
         plot!(p, circle(pos[i]...), seriestype = [:shape,], lw = 0.5, c = color, linecolor = :black, lab = :none, fillalpha = 0.5, aspect_ratio = 1) #plot the cell with its specific color choice
     end
 
-    first = findfirst(isequal(1), data.id)
-    isnothing(first) || plot!(p, circle(pos[first]...), seriestype = [:shape,], lw = 0.5, c = :black, linecolor = :black, lab = "first", fillalpha = 1.0, aspect_ratio = 1) #plot the start cell (lowest id) with black filling
+    first = findfirst(isequal(1), data.index)
+    isnothing(first) || plot!(p, circle(pos[first]...), seriestype = [:shape,], lw = 0.5, c = :black, linecolor = :black, lab = "first", fillalpha = 1.0, aspect_ratio = 1) #plot the start cell (lowest index) with black filling
     isempty(path) || savefig("$(path)")
     return p
 end
@@ -41,7 +41,7 @@ function plotting_2d_colored_mutations(data::DataFrame; path="")
         plot!(p, circle(data.position[i]...), seriestype = [:shape,], lw = 0.5, c = color_scheme[color], linecolor = :black, lab=:none, fillalpha = 1.0, aspect_ratio = 1)
     end
 
-    first = findfirst(isequal(1), data.id)
+    first = findfirst(isequal(1), data.index)
     isnothing(first) || plot!(p, circle(data.position[first]...), seriestype = [:shape,], lw = 0.5, c = :black, linecolor = :black, lab = "first", fillalpha = 1.0, aspect_ratio = 1)
 
     isempty(path) || savefig("$(path)_colored", p)
@@ -49,25 +49,25 @@ function plotting_2d_colored_mutations(data::DataFrame; path="")
 end
 
 #function to plot a tumor with color determined by the latest mutation of the cell
-function plotting!(scene, data::DataFrame; path="", color=nothing, dim = length(data.position[1]))
+function plotting!(scene, data::DataFrame; path="", color=nothing, dim = length(data.position[1]), shading = false)
 
     p = (getindex.(data.position, i) for i=1:dim)
     isnothing(color) && (color = [isempty(mut) ? 1 : mod(mut[end], 68)+1 for mut in data.mutations])
-    meshscatter!(scene, p..., markersize = 1.0, color = color, colormap=distinguishable_colors(68), scale_plot = false)
+    meshscatter!(scene, p..., markersize = 1.0, color = color, colormap=distinguishable_colors(68), scale_plot = false, shading=shading)
     isempty(path) || save("$(path)", scene)
     return scene
 end
-plotting(data::DataFrame; path="", color=nothing, dim=length(data.position[1])) = plotting!(Scene(), data::DataFrame; path=path, color=color, dim=dim)
+plotting(data::DataFrame; path="", color=nothing, dim=length(data.position[1]), shading=false) = plotting!(Scene(), data::DataFrame; path=path, color=color, dim=dim, shading=shading)
 
 
 #function to plot the tumor similar to Ling et al. (2015), color code in experiments
-function plotting_colored_mutations(data::DataFrame; path="", dim=length(data.position[1]))
+function plotting_colored_mutations(data::DataFrame; colormap=:tab10, color_set_size = 10, path="", dim=length(data.position[1]), shading = false)
 
     p = ( getindex.(data.position, i) for i=1:dim )
 
-    color_choice = colors_by_muts(data.mutations; color_set_size=10)
+    color_choice = colors_by_muts(data.mutations; color_set_size=color_set_size)
 
-    scene = meshscatter(p..., markersize = 1., color = color_choice, colormap=:tab10, scale_plot = false)
+    scene = meshscatter(p..., markersize = 1., color = color_choice, colormap=colormap, scale_plot = false, shading=shading)
 
     isempty(path) || save("$(path)_colored", scene)
     return scene

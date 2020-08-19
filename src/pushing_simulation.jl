@@ -1,7 +1,7 @@
 export birth_death_pushing, birth_death_pushing!, DataFrame!, DataFrame
 
 mutable struct Cell
-    id :: Int64
+    index :: Int64
     position :: Vector{Float64}
     parent :: Int64
     mutations :: Vector{Int64}
@@ -24,7 +24,7 @@ function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, mu, cellbox, 
     pos = parent.position + 2 .* δ/norm(δ)
     push!(cellbox, pos2box.(pos))
 
-    new = Cell(cur_id, copy(pos), parent.id, copy(parent.mutations), t, copy(pos))
+    new = Cell(cur_id, copy(pos), parent.index, copy(parent.mutations), t, copy(pos))
 
     push!(tumor, new)
 

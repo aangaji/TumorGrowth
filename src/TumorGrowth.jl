@@ -26,7 +26,7 @@ export data_import
 
 #function to import a saved tumor from a .csv file
 function data_import(path::String)
-    data = DataFrame!(CSV.File(path))
+    data = path |> CSV.File |> DataFrame!
     for field in data |> names .|> Symbol
         try data[!, field] = data[!, field] .|> Meta.parse .|> eval catch e end
     end
