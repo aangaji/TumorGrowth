@@ -5,7 +5,9 @@ function find_neighbors(cellbox, root)
     return collect( n!=root && all(any(ir-2 .<i[k].<ir+2) for (k,ir) in iter) for (n,i) in enumerate(cellbox))
 end
 
+
 function pushing!(tumor, root, cellbox)
+    do_plotting = true
     queue = [root]
     N = length(tumor)
     while !isempty(queue)
@@ -14,10 +16,12 @@ function pushing!(tumor, root, cellbox)
 
         for n in shuffle!( (1:N)[find_neighbors(cellbox, root)] )
             r2 = tumor[n].position
-            d = norm(r1.-r2)
-            if d < 2.
-                r2 .+= (r2.-r1)*(2.1/d - 1)
+            d = r2.-r1
+            if norm(d) < 2.
+                r2 .+= d*(2.2/norm(d) - 1)#/2
+                #r1 .-= d*(2.2/norm(d) - 1)/2
                 cellbox[n] = pos2box.(r2)
+                #cellbox[root] = pos2box.(r1)
                 push!(queue, n)
             end
         end
@@ -30,11 +34,11 @@ function pushing_recursive!(tumor, root, cellbox)
     N=length(tumor)
     for n in shuffle!( (1:N)[find_neighbors(cellbox, root)] )
         r2 = tumor[n].position
-        d = norm(r1.-r2)
-        if d < 2.
-            r2 .+= (r2.-r1)*(2.1/d - 1)
+        d = r2.-r1
+        if norm(d) < 2.
+            r2 .+= d*(2.2/norm(d) - 1)
             cellbox[n] = pos2box.(r2)
-            tumor[n].position = r2
+
             pushing_recursive!(tumor, n, cellbox)
         end
     end

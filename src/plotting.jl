@@ -17,43 +17,43 @@ function plotting_2d!(p, data::DataFrame; path="", annotate=false, color=nothing
         color_choice = 1
         if ! isempty(mut)
             color_choice = mod(maximum(mut), 10)+1 #choose a different color for each mutation out of a colorset with 10 colors
-            annotate && annotate!(pos[i]..., text(mut[1], 5, :black)) #annotate the number of the first mutation to each cell
+            annotate && annotate!(pos[i]..., Plots.text(mut[1], 5, :black)) #annotate the number of the first mutation to each cell
         end
         choose_color && (color = color_scheme[color_choice])
-        plot!(p, circle(pos[i]...), seriestype = [:shape,], lw = 0.5, c = color, linecolor = :black, lab = :none, fillalpha = 0.5, aspect_ratio = 1) #plot the cell with its specific color choice
+        Plots.plot!(p, circle(pos[i]...), seriestype = [:shape,], lw = 0.5, c = color, linecolor = :black, lab = :none, fillalpha = 0.5, aspect_ratio = 1) #plot the cell with its specific color choice
     end
 
     first = findfirst(isequal(1), data.index)
-    isnothing(first) || plot!(p, circle(pos[first]...), seriestype = [:shape,], lw = 0.5, c = :black, linecolor = :black, lab = "first", fillalpha = 1.0, aspect_ratio = 1) #plot the start cell (lowest index) with black filling
-    isempty(path) || savefig("$(path)")
+    isnothing(first) || Plots.plot!(p, circle(pos[first]...), seriestype = [:shape,], lw = 0.5, c = :black, linecolor = :black, lab = "first", fillalpha = 1.0, aspect_ratio = 1) #plot the start cell (lowest index) with black filling
+    isempty(path) || Plots.savefig("$(path)")
     return p
 end
 
-plotting_2d(data::DataFrame; path="", annotate=false) = plotting_2d!(plot(), data; path=path, annotate=annotate)
+plotting_2d(data::DataFrame; path="", annotate=false) = plotting_2d!(Plots.plot(), data; path=path, annotate=annotate)
 
 #function to plot the tumor similar to Ling et al. (2015), color code in experiments
 function plotting_2d_colored_mutations(data::DataFrame; path="")
 
     color_scheme = palette(:tab10)
-    p = plot()
+    p = Plots.plot()
 
     for (i,color) in enumerate(colors_by_muts(data.mutations; color_set_size=10))
         plot!(p, circle(data.position[i]...), seriestype = [:shape,], lw = 0.5, c = color_scheme[color], linecolor = :black, lab=:none, fillalpha = 1.0, aspect_ratio = 1)
     end
 
     first = findfirst(isequal(1), data.index)
-    isnothing(first) || plot!(p, circle(data.position[first]...), seriestype = [:shape,], lw = 0.5, c = :black, linecolor = :black, lab = "first", fillalpha = 1.0, aspect_ratio = 1)
+    isnothing(first) || Plots.plot!(p, circle(data.position[first]...), seriestype = [:shape,], lw = 0.5, c = :black, linecolor = :black, lab = "first", fillalpha = 1.0, aspect_ratio = 1)
 
-    isempty(path) || savefig("$(path)_colored", p)
+    isempty(path) || Plots.savefig("$(path)_colored", p)
     return p
 end
 
 #function to plot a tumor with color determined by the latest mutation of the cell
 function plotting!(scene, data::DataFrame; path="", color=nothing, dim = length(data.position[1]), shading = false)
 
-    p = (getindex.(data.position, i) for i=1:dim)
+    p = [Point(pos...) for pos in data.position]
     isnothing(color) && (color = [isempty(mut) ? 1 : mod(mut[end], 68)+1 for mut in data.mutations])
-    meshscatter!(scene, p..., markersize = 1.0, color = color, colormap=distinguishable_colors(68), scale_plot = false, shading=shading)
+    meshscatter!(scene, p, markersize = 1.0, color = color, colormap=Plots.distinguishable_colors(68), scale_plot = false, shading=shading)
     isempty(path) || save("$(path)", scene)
     return scene
 end
@@ -63,11 +63,11 @@ plotting(data::DataFrame; path="", color=nothing, dim=length(data.position[1]), 
 #function to plot the tumor similar to Ling et al. (2015), color code in experiments
 function plotting_colored_mutations(data::DataFrame; colormap=:tab10, color_set_size = 10, path="", dim=length(data.position[1]), shading = false)
 
-    p = ( getindex.(data.position, i) for i=1:dim )
+    p = [Point(pos...) for pos in data.position]
 
     color_choice = colors_by_muts(data.mutations; color_set_size=color_set_size)
 
-    scene = meshscatter(p..., markersize = 1., color = color_choice, colormap=colormap, scale_plot = false, shading=shading)
+    scene = meshscatter(p, markersize = 1., color = color_choice, colormap=colormap, scale_plot = false, shading=shading)
 
     isempty(path) || save("$(path)_colored", scene)
     return scene

@@ -7,26 +7,25 @@ using Revise
 ####### SIMULATION ######
 #########################
 
-@time (index, mut, t), tumor, mut_events = birth_death_pushing(1000; b=0.69, d=0.0, mu=0.3, dim=2)
-tumor = tumor |> DataFrame
+@time (index, mut, t), tumor, mut_events = birth_death_pushing(1000; b=0.69, d=0.0, mu=0.3, dim=2, seed=1010)
 
-fig = plotting_colored_mutations(tumor, colormap=:tab20, color_set_size=20, shading=false)
+birth_death_pushing!(tumor, mut_events, length(tumor)+1; b=0.69, d=0.0, mu=0.3, dim=2, t=t, cur_id=index, cur_mutation=mut, seed=1010)
 
-clone(tumor, nothing) |> t -> plotting!(fig, t, color=:black)
+b = tumor |> DataFrame
 
-clones(tumor)
+fig = plotting_colored_mutations(b, colormap=:tab20, color_set_size=20, shading=false)
 
 plotting_2d(tumor; annotate = false)
 plotting_2d_colored_mutations(tumor)
-
 @show tumor
+
 #########################
 ##### TUMOUR SAVING #####
 #########################
 
 using DataFrames, CSV
 
-(index, mut, t), tumor, mut_events = birth_death_pushing(5000; b=0.3, d=0.0, mu=0.3, dim=2)
+(index, mut, t), tumor, mut_events = birth_death_pushing(5000; b=0.3, d=0.0, mu=0.3, dim=2, seed=1234)
 CSV.write("test_set_2d.csv", DataFrame(tumor), delim='\t')
 b = data_import("test_set_2d.csv")
 @show b
@@ -77,9 +76,10 @@ b.mutations |> mutation_freqs
 
 fig = plotting_colored_mutations(tumor, colormap=:tab20, color_set_size=20, shading=false)
 clone(tumor, nothing) |> t -> plotting!(fig, t, color=:black)
+clone(tumor, 1) |> t -> plotting!(fig, t, color=:black)
 
 fig = plotting_colored_mutations(tumor, colormap=:tab20, color_set_size=20, shading=false)
-clones(tumor)[10] |> t -> plotting!(fig, t, color=:black)
+clones(tumor)[1] |> t -> plotting!(fig, t, color=:black)
 
 fig = plotting_colored_mutations(tumor, colormap=:tab20, color_set_size=20, shading=false)
 clones(tumor)[10] |> clones .|> t -> plotting!(fig, t, color=:black)

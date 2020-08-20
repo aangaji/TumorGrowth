@@ -34,7 +34,9 @@ function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, mu, cellbox, 
     end
 end
 
-function birth_death_pushing!( tumor::Vector{Cell}, mutation_events::Vector{Mutation_event}, tumor_size; b, d, mu, cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position))
+function birth_death_pushing!( tumor::Vector{Cell}, mutation_events::Vector{Mutation_event}, tumor_size; b, d, mu, cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position), seed=nothing)
+    isnothing(seed) || Random.seed!(seed)
+
     N = length(tumor)
 
     cellbox = [pos2box.(p) for p in getfield.(tumor,:position)]
@@ -71,13 +73,13 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutation_events::Vector{Muta
     return (cur_id, cur_mutation, t)
 end
 
-function birth_death_pushing( tumor_size; b, d, mu, cur_mutation = 0, dim )
+function birth_death_pushing( tumor_size; b, d, mu, cur_mutation = 0, dim , seed=nothing)
 
     tumor = [Cell(1, zeros(Float64,dim), 0, collect(1:cur_mutation), 0.0, zeros(Float64, dim))]
 
     mutation_events = Vector{Mutation_event}()
 
-    cur_id, cur_mutation, t = birth_death_pushing!(tumor, mutation_events, tumor_size; b=b, d=d, mu=mu, cur_mutation=cur_mutation, dim=dim)
+    cur_id, cur_mutation, t = birth_death_pushing!(tumor, mutation_events, tumor_size; b=b, d=d, mu=mu, cur_mutation=cur_mutation, dim=dim, seed=seed)
 
     return (cur_id, cur_mutation, t), tumor, mutation_events
 end

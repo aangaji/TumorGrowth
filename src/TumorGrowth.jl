@@ -4,8 +4,8 @@ begin
 print("Loading Packages... ")
 import DataFrames: DataFrame!, DataFrame
 using CSV
-using Plots
-using Makie: Scene, meshscatter, meshscatter!, text!, save
+import Plots
+using Makie
 using LinearAlgebra
 using Random
 #using Juno
@@ -17,7 +17,8 @@ end
     "pushing_simulation.jl",
     "plotting.jl",
     "sampling.jl",
-    "pushing_prototype.jl",
+    "pushing.jl",
+    "pushing_animate.jl",
     "analysis.jl"
 ) .|> include
 
