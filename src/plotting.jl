@@ -1,4 +1,4 @@
-export plotting_2d, plotting_2d!, plotting_2d_colored_mutations, plotting, plotting!, plotting_colored_mutations
+export plotting, plotting!, plotting_colored_mutations, plotting_colored_mutations!
 
 #function to create circles in a 2D plot (here: cells with radius r)
 function circle(pos_x, pos_y)
@@ -8,7 +8,7 @@ end
 
 #function to plot a tumor with each mutation colored differently
 function plotting_2d!(p, data::DataFrame; path="", annotate=false, color=nothing)
-
+    isempty(data) && return
     pos = data.position
     color_scheme = palette(:tab10)
     choose_color = false
@@ -33,7 +33,7 @@ plotting_2d(data::DataFrame; path="", annotate=false) = plotting_2d!(Plots.plot(
 
 #function to plot the tumor similar to Ling et al. (2015), color code in experiments
 function plotting_2d_colored_mutations(data::DataFrame; path="")
-
+    isempty(data) && return
     color_scheme = palette(:tab10)
     p = Plots.plot()
 
@@ -49,27 +49,38 @@ function plotting_2d_colored_mutations(data::DataFrame; path="")
 end
 
 #function to plot a tumor with color determined by the latest mutation of the cell
-function plotting!(scene, data::DataFrame; path="", color=nothing, dim = length(data.position[1]), shading = false)
-
+function plotting!(scene, data::DataFrame; path="", color=nothing, shading = false)
+    isempty(data) && return
     p = [Point(pos...) for pos in data.position]
     isnothing(color) && (color = [isempty(mut) ? 1 : mod(mut[end], 68)+1 for mut in data.mutations])
     meshscatter!(scene, p, markersize = 1.0, color = color, colormap=Plots.distinguishable_colors(68), scale_plot = false, shading=shading)
     isempty(path) || save("$(path)", scene)
+end
+function plotting(data::DataFrame; path="", color=nothing, shading=false, inline=false)
+    AbstractPlotting.inline!(inline)
+    scene = Scene()
+    plotting!(scene, data::DataFrame; path=path, color=color, shading=shading)
     return scene
 end
-plotting(data::DataFrame; path="", color=nothing, dim=length(data.position[1]), shading=false) = plotting!(Scene(), data::DataFrame; path=path, color=color, dim=dim, shading=shading)
 
 
 #function to plot the tumor similar to Ling et al. (2015), color code in experiments
-function plotting_colored_mutations(data::DataFrame; colormap=:tab10, color_set_size = 10, path="", dim=length(data.position[1]), shading = false)
 
+function plotting_colored_mutations!(scene, data::DataFrame; colormap=:tab10, color_set_size = 10, path="", shading = false, limits = AbstractPlotting.automatic)
+    isempty(data) && return
     p = [Point(pos...) for pos in data.position]
 
     color_choice = colors_by_muts(data.mutations; color_set_size=color_set_size)
 
-    scene = meshscatter(p, markersize = 1., color = color_choice, colormap=colormap, scale_plot = false, shading=shading)
+    meshscatter!(scene, p, markersize = 1., color = color_choice, colormap=colormap, scale_plot = false, shading=shading, limits = limits)
 
     isempty(path) || save("$(path)_colored", scene)
+end
+
+function plotting_colored_mutations(data::DataFrame; colormap=:tab10, color_set_size = 10, path="", shading = false, limits = AbstractPlotting.automatic, inline=false)
+    AbstractPlotting.inline!(inline)
+    scene = Scene()
+    plotting_colored_mutations!(scene, data; colormap=colormap, color_set_size = color_set_size, path=path, shading = shading, limits = limits)
     return scene
 end
 

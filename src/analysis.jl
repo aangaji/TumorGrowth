@@ -28,7 +28,7 @@ end
 
 # clone returns all cells with "mut" as their "sub"th mutation. Cells with less than "sub" mutations are returned for mut=nothing
 
-clone(tumor, mut; sub = find_mut(tumor, mut) ) = filter(r -> length(r.mutations)<sub ? isnothing(mut) : getindex(r.mutations, sub) == mut, tumor )
+clone(tumor, mut; sub = find_mut(tumor, mut) ) = filter(r -> isnothing(sub) || length(r.mutations)<sub ? isnothing(mut) : getindex(r.mutations, sub) == mut, tumor )
 
 # clones returns all subclones with unique mutations as "sub"th mutation and one subclone with less than "sub" mutations (clonal or no mutations)
 

@@ -1,4 +1,4 @@
-export cross_section, radial_sample
+export cross_section, radial_sample, punch, bulk
 
 function cross_section(tumor; x=nothing, y=nothing, z=nothing, width = 2., reduce_dim=false)
     for (d,coord) in enumerate((x,y,z))
@@ -22,4 +22,8 @@ function reduce_dimension(position, d)
     return getindex(position, select)
 end
 
-radial_sample(tumor; r=2., width=2.) = tumor[-width .< [sqrt(sum(p.^2)) for p in tumor.position] .- r .< width, :]
+radial_sample(tumor; r=2., width=2.) = tumor[ tumor.position .|> p-> abs(sqrt(sum(p.^2))-r)<width, :]
+
+punch(tumor; pos, r=10.) = tumor[ tumor.position .|> p-> norm(p.-pos) < r, :]
+
+bulk(tumor; pos, box) = tumor[ tumor.position .|> p-> all(abs.(p .- pos) .< box./2), :]

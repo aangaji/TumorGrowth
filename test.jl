@@ -7,16 +7,16 @@ using Revise
 ####### SIMULATION ######
 #########################
 
-@time (index, mut, t), tumor, mut_events = birth_death_pushing(1000; b=0.69, d=0.0, mu=0.3, dim=2, seed=1010)
+@time (index, mut, t), tumor, mut_events = birth_death_pushing(10.; b=0.69, d=0.0, mu=0.3, dim=2, seed=1010)
 
 birth_death_pushing!(tumor, mut_events, length(tumor)+1; b=0.69, d=0.0, mu=0.3, dim=2, t=t, cur_id=index, cur_mutation=mut, seed=1010)
 
 b = tumor |> DataFrame
 
-fig = plotting_colored_mutations(b, colormap=:tab20, color_set_size=20, shading=false)
+fig = plotting_colored_mutations(b, colormap=:tab20, color_set_size=20, shading=false, limits=limits)
 
-plotting_2d(tumor; annotate = false)
-plotting_2d_colored_mutations(tumor)
+# plotting_2d(tumor; annotate = false)
+# plotting_2d_colored_mutations(tumor)
 @show tumor
 
 #########################
@@ -53,6 +53,11 @@ cross_section(b; x=10., width=3.) |> data -> plotting!(fig, data; color=:black)
 cross_section(b; y=25., width=3.) |> data -> plotting!(fig, data; color=:black)
 radial_sample(b; r=30., width=3.) |> data -> plotting!(fig, data; color=:black, path="test_2000_2d.png")
 
+fig = b |> plotting_colored_mutations
+bulk(b; pos=(20.,20.), box=(20,30)) |> data -> plotting!(fig, data; color=:black)
+punch(b; pos=(-20,-20), r=10) |> data -> plotting!(fig, data; color=:black)
+
+
 b = data_import("test_5000_3d.csv")
 scene = b |> plotting_colored_mutations
 cross_section(b; x=10., width=3.) |> data -> plotting!(scene, data; color=:black, path="test_5000_3d.png")
@@ -72,7 +77,9 @@ b |> plotting_colored_mutations
 b.mutations |> allele_population
 b.mutations |> mutation_freqs
 
-# clones
+########################
+######## clones ########
+########################
 
 fig = plotting_colored_mutations(tumor, colormap=:tab20, color_set_size=20, shading=false)
 clone(tumor, nothing) |> t -> plotting!(fig, t, color=:black)
@@ -83,3 +90,14 @@ clones(tumor)[1] |> t -> plotting!(fig, t, color=:black)
 
 fig = plotting_colored_mutations(tumor, colormap=:tab20, color_set_size=20, shading=false)
 clones(tumor)[10] |> clones .|> t -> plotting!(fig, t, color=:black)
+
+
+#########################
+###### time series ######
+#########################
+
+time_series = tumor_stepper(0.0:0.1:10.; b=0.69, d=0.0, mu=0.6, dim=2, seed = 1000)
+
+show_clone!(scene, snapshot; mut) = plotting!(scene, clone(snapshot,mut); color=:black)
+
+record_growth(time_series; path="test.gif", manipulate! = (sc, sn) -> show_clone!(sc, sn; mut=2))

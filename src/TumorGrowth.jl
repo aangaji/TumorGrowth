@@ -16,10 +16,11 @@ end
 (
     "pushing_simulation.jl",
     "plotting.jl",
-    "sampling.jl",
     "pushing.jl",
     "pushing_animate.jl",
-    "analysis.jl"
+    "sampling.jl",
+    "analysis.jl",
+    "time_series.jl"
 ) .|> include
 
 
