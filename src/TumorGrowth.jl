@@ -8,7 +8,7 @@ import Plots
 using Makie
 using LinearAlgebra
 using Random
-#using Juno
+using AbstractPlotting: automatic
 using ProgressMeter
 println("Done!")
 end

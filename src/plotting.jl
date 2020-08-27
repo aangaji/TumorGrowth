@@ -54,7 +54,7 @@ function plotting!(scene, data::DataFrame; path="", color=nothing, shading = fal
     p = [Point(pos...) for pos in data.position]
     isnothing(color) && (color = [isempty(mut) ? 1 : mod(mut[end], 68)+1 for mut in data.mutations])
     meshscatter!(scene, p, markersize = 1.0, color = color, colormap=Plots.distinguishable_colors(68), scale_plot = false, shading=shading)
-    isempty(path) || save("$(path)", scene)
+    isempty(path) || save(path, scene)
 end
 function plotting(data::DataFrame; path="", color=nothing, shading=false, inline=false)
     AbstractPlotting.inline!(inline)
@@ -66,54 +66,21 @@ end
 
 #function to plot the tumor similar to Ling et al. (2015), color code in experiments
 
-function plotting_colored_mutations!(scene, data::DataFrame; colormap=:tab10, color_set_size = 10, path="", shading = false, limits = AbstractPlotting.automatic)
-    isempty(data) && return
-    p = [Point(pos...) for pos in data.position]
+function plotting_colored_mutations!(scene, tumor::DataFrame; colorpalette = Plots.palette(:tab10), path="", shading = false, limits = AbstractPlotting.automatic, sub=1)
+    isempty(tumor) && return
 
-    color_choice = colors_by_muts(data.mutations; color_set_size=color_set_size)
+    p = [Point(pos...) for pos in tumor.position]
 
-    meshscatter!(scene, p, markersize = 1., color = color_choice, colormap=colormap, scale_plot = false, shading=shading, limits = limits)
-
-    isempty(path) || save("$(path)_colored", scene)
+    subclones = clones(tumor; sub=sub)
+    for (i,c) in enumerate(subclones)
+         meshscatter!(scene, [Point(pos...) for pos in c.position], markersize = 1., color = colorpalette[(i-1)%length(colorpalette)+1], scale_plot = false, shading=shading, limits = limits)
+    end
+    isempty(path) || save(path, scene)
 end
 
-function plotting_colored_mutations(data::DataFrame; colormap=:tab10, color_set_size = 10, path="", shading = false, limits = AbstractPlotting.automatic, inline=false)
+function plotting_colored_mutations(tumor::DataFrame; colorpalette=Plots.palette(:tab10), path="", shading = false, limits = AbstractPlotting.automatic, inline=false)
     AbstractPlotting.inline!(inline)
     scene = Scene()
-    plotting_colored_mutations!(scene, data; colormap=colormap, color_set_size = color_set_size, path=path, shading = shading, limits = limits)
+    plotting_colored_mutations!(scene, tumor; colorpalette = colorpalette, path=path, shading = shading, limits = limits)
     return scene
-end
-
-function colors_by_muts(mutations; color_set_size=1) :: Vector{Int64}
-
-    color_choice = fill(color_set_size, length(mutations))
-
-    colored_mutations = Vector{Vector{Int64}}(undef,0)
-
-    for (i, mut_list) in enumerate(mutations)
-        color_found = false
-        if ! isempty(mut_list) #if the cell has mutations
-            if isempty(colored_mutations) #if this is the first mutated cell
-                push!(colored_mutations, mut_list) #push the mutations in colored mutations
-                color_choice[i] = 1
-            else
-                for (j, cmut) in enumerate(colored_mutations) #search for the specific color (color j) and plot the cell with this color (multiple times if the succesive mutations are already known)
-                    if mut_list[1] in cmut
-                        for mut in mut_list
-                            color_choice[i] = mod(j,color_set_size)+1
-                            if !(mut in cmut)
-                                push!(colored_mutations[j], mut)
-                            end
-                        end
-                        color_found = true
-                    end
-                end
-                if !color_found #if the first mutation of a cell wasn't found already, choose a new color by pushing it into the array colored_mutations
-                    color_choice[i] = mod(length(colored_mutations)+1,color_set_size)+1
-                    push!(colored_mutations, mut_list)
-                end
-            end
-        end
-    end
-    return color_choice
 end

@@ -1,5 +1,5 @@
 using Pkg; Pkg.activate(pwd()); Pkg.instantiate()
-using Revise
+using Revise, Plots
 
 @time using TumorGrowth
 
@@ -12,8 +12,7 @@ using Revise
 birth_death_pushing!(tumor, mut_events, length(tumor)+1; b=0.69, d=0.0, mu=0.3, dim=2, t=t, cur_id=index, cur_mutation=mut, seed=1010)
 
 b = tumor |> DataFrame
-
-fig = plotting_colored_mutations(b, colormap=:tab20, color_set_size=20, shading=false, limits=limits)
+fig = plotting_colored_mutations(b, colorpalette = palette(:tab20), shading=false, inline=true)
 
 # plotting_2d(tumor; annotate = false)
 # plotting_2d_colored_mutations(tumor)
@@ -98,6 +97,9 @@ clones(tumor)[10] |> clones .|> t -> plotting!(fig, t, color=:black)
 
 time_series = tumor_stepper(0.0:0.1:10.; b=0.69, d=0.0, mu=0.6, dim=2, seed = 1000)
 
-show_clone!(scene, snapshot; mut) = plotting!(scene, clone(snapshot,mut); color=:black)
+function show_clone!(scene, snapshot; mut)
+    plotting_colored_mutations!(scene, snapshot)
+    plotting!(scene, clone(snapshot,mut); color=:black)
+end
 
-record_growth(time_series; path="test.gif", manipulate! = (sc, sn) -> show_clone!(sc, sn; mut=2))
+record_growth(time_series; path="test.gif", plot_func! = (sc, sn) -> show_clone!(sc, sn; mut=2))
