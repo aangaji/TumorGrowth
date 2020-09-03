@@ -70,11 +70,9 @@ radial_sample(b; r=20., width=3.) |> data->cross_section(data; x=10., width=6.) 
 ####### Analysis #######
 ########################
 
-b = data_import("test_set_3d.csv")
+b = data_import("test_5000_3d.csv")
 
-b |> plotting_colored_mutations
-b.mutations |> allele_population
-b.mutations |> mutation_freqs
+b |> mutation_freqs
 
 ########################
 ######## clones ########

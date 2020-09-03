@@ -69,7 +69,7 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutation_events::Vector{Muta
         end
         #print("Progress: $(size(tumor,1))/$tumor_size | Recent mutation: $cur_mutation \r")
         #@info "Tumor size" progress=N/tumor_size _id=id
-        ProgressMeter.update!(prog, N)
+        ProgressMeter.update!(prog, N )
     end
     return (cur_id, cur_mutation, t)
 end
@@ -109,7 +109,7 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutation_events::Vector{Muta
         end
         #print("Progress: $(size(tumor,1))/$tumor_size | Recent mutation: $cur_mutation \r")
         #@info "Tumor size" progress=N/tumor_size _id=id
-        ProgressMeter.update!(prog, N)
+        ProgressMeter.update!(prog, Int64(floor(t)) )
     end
     return (cur_id, cur_mutation, t)
 end

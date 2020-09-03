@@ -4,9 +4,10 @@ begin
 print("Loading Packages... ")
 import DataFrames: DataFrame!, DataFrame
 using CSV
-import Plots
+using Plots: palette, distinguishable_colors
 using Makie
 using LinearAlgebra
+using StatsBase: fit, Histogram
 using Random
 using AbstractPlotting: automatic
 using ProgressMeter
