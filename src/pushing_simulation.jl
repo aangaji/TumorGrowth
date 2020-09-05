@@ -115,8 +115,8 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutation_events::Vector{Muta
 end
 
 function birth_death_pushing( t_or_size; b, d, mu, cur_mutation = 0, dim , seed=nothing)
-
-    tumor = [Cell(1, zeros(Float64,dim), 0, collect(1:cur_mutation), 0.0, zeros(Float64, dim))]
+    p₀ = zeros(Float64,dim)
+    tumor = [Cell(1, p₀, 0, collect(1:cur_mutation), 0.0, p₀)]
 
     mutation_events = Vector{Mutation_event}()
 

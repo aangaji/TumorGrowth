@@ -1,5 +1,5 @@
 using Pkg; Pkg.activate(pwd()); Pkg.instantiate()
-using Revise, Plots
+using Revise
 
 @time using TumorGrowth
 
@@ -10,6 +10,8 @@ using Revise, Plots
 @time (index, mut, t), tumor, mut_events = birth_death_pushing(10.; b=0.69, d=0.0, mu=0.3, dim=2, seed=1010)
 
 birth_death_pushing!(tumor, mut_events, length(tumor)+1; b=0.69, d=0.0, mu=0.3, dim=2, t=t, cur_id=index, cur_mutation=mut, seed=1010)
+
+using Plots: palette, distinguishable_colors
 
 b = tumor |> DataFrame
 fig = plotting_colored_mutations(b, colorpalette = palette(:tab20), shading=false, inline=true)
@@ -25,9 +27,12 @@ fig = plotting_colored_mutations(b, colorpalette = palette(:tab20), shading=fals
 using DataFrames, CSV
 
 (index, mut, t), tumor, mut_events = birth_death_pushing(5000; b=0.3, d=0.0, mu=0.3, dim=2, seed=1234)
-CSV.write("test_set_2d.csv", DataFrame(tumor), delim='\t')
-b = data_import("test_set_2d.csv")
+CSV.write("test_2000_2d.csv", DataFrame(tumor), delim='\t')
+b = data_import("test_2000_2d.csv")
 @show b
+
+b = data_import("test_2000_2d.csv")
+@btime data_import("test_2000_2d.csv")
 
 ########################
 ####### PLOTTING #######

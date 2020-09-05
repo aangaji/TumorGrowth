@@ -30,8 +30,11 @@ export data_import
 #function to import a saved tumor from a .csv file
 function data_import(path::String)
     data = path |> CSV.File |> DataFrame!
-    for field in data |> names .|> Symbol
-        try data[!, field] = data[!, field] .|> Meta.parse .|> eval catch e end
+    fields = names(data)
+    types = typeof.([first(data)[field] for field in fields])
+
+    for field in fields[isequal.(types, String)]
+        data[!,field] = data[!,field] .|> Meta.parse .|> eval
     end
     return data
 end
