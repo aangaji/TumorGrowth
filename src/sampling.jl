@@ -22,7 +22,7 @@ function reduce_dimension(position, d)
     return getindex(position, select)
 end
 
-radial_sample(tumor; r=2., width=2.) = tumor[ tumor.position .|> p-> abs(sqrt(sum(p.^2))-r)<width, :]
+radial_sample(tumor; r=2., width=2.) = tumor[ tumor.position .|> p-> abs(norm(p)-r)<width, :]
 
 punch(tumor; pos, r=10.) = tumor[ tumor.position .|> p-> norm(p.-pos) < r, :]
 

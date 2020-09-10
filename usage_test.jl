@@ -70,7 +70,6 @@ cross_section(b; y=5., width=3.) |> data -> plotting!(scene, data; color=:black)
 fig = cross_section(b; x=10., width=6.) |> plotting_colored_mutations
 radial_sample(b; r=20., width=3.) |> data->cross_section(data; x=10., width=6.) |> data -> plotting!(fig, data; color=:black)
 
-
 ########################
 ####### Analysis #######
 ########################

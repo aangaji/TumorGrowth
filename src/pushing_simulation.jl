@@ -16,7 +16,13 @@ struct Mutation_event
     p_birth :: Vector{Float64}
 end
 
-DataFrame(tumor::Vector{T}) where T = DataFrame( [getfield.(tumor, field) for field in fieldnames(T)], collect(fieldnames(T)) )
+function DataFrame(tumor::Vector{T}) where T
+    df = DataFrame()
+    for field in fieldnames(T)
+        df.field = getfield.(tumor, field)
+    end
+    return df
+end
 
 function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, mu, cellbox, t, dim)
 

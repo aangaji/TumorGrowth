@@ -3,7 +3,7 @@ export mutation_freqs, clone, clones
 function mutation_freqs(tumor)
     allmuts = vcat(tumor.mutations...)
     bins = sort(unique(allmuts)) |> u -> vcat(u, u[end]+1)
-    hist = fit(StatsBase.Histogram, allmuts, bins, closed=:left)
+    hist = fit(Histogram, allmuts, bins, closed=:left)
     return hist.weights ./ size(tumor, 1)
 end
 
