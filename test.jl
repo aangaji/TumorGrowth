@@ -7,9 +7,15 @@ using Revise
 ####### SIMULATION ######
 #########################
 
-@time (index, mut, t), tumor, mut_events = birth_death_pushing(10.; b=0.69, d=0.0, mu=0.3, dim=2, seed=1010)
+#### 5000 cells 2d 30s runtime
 
-birth_death_pushing!(tumor, mut_events, length(tumor)+1; b=0.69, d=0.0, mu=0.3, dim=2, t=t, cur_id=index, cur_mutation=mut, seed=1010)
+@time (index, mut, t), tumor, mut_events = birth_death_pushing(4000; b=0.69, d=0.0, mu=0.3, dim=2, seed=1010)
+
+bumor = deepcopy(tumor)
+
+birth_death_pushing!(bumor, mut_events, length(tumor)+1; b=0.69, d=0.0, mu=0.3, dim=2, t=t, cur_id=index, cur_mutation=mut, seed=1002)
+
+birth_death_pushing(15.; b=0.69, d=0.0, mu=0.3, dim=3, seed=1010)
 
 using Plots: palette, distinguishable_colors
 

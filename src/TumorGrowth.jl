@@ -2,11 +2,12 @@ module TumorGrowth
 
 begin
 print("Loading Packages... ")
-import DataFrames: DataFrame!, DataFrame
+import DataFrames: DataFrame, DataFrameRow
 using CSV
 using Plots: palette, distinguishable_colors
 using Makie
 using LinearAlgebra
+using StaticArrays
 using StatsBase: fit, Histogram
 using Random
 using AbstractPlotting: automatic
