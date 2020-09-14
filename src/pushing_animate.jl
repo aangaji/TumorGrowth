@@ -1,95 +1,117 @@
-function update_plot!(scene, tumor, root, n, queue; color, sleeptime, w=2)
-    p = [Point(cell.position...) for cell in tumor]
-    while length(scene) > 1
-      delete!(scene, scene[end])
-    end
-    meshscatter!(scene, p, markersize = 1.0, color = :lightgrey, scale_plot = false, shading=false)
-    isempty(queue) || meshscatter!(scene, p[queue], markersize = 1.0, color = :grey, scale_plot = false, shading=false)
-    isempty(root) || meshscatter!(scene, p[root], markersize = 1.0, color = :blue, scale_plot = false, shading=false)
-    isempty(n) || meshscatter!(scene, p[n], markersize = 1.0, color = color, scale_plot = false, shading=false, show_axis = false)
-    scene[Axis][:ticks][:ranges] = (-12:w:12, -12:w:12)
-    scene[Axis][:grid][:linewidth] = (3,3)
-    #sleep(sleeptime)
-end
-
-
 function pushing!_animate(tumor, root, cellbox, dimv::Val)
     queue = [root]
     N = length(tumor)
 
-    scene= Scene()
-    p = [Point(cell.position...) for cell in tumor]
-    meshscatter!(scene, p, markersize = 1.0, color = :lightgrey, scale_plot = false, shading=false)
+    points = [Point2f0(cell.position...) for cell in tumor]
+    pointsNode = Node(points)
+    colors = fill(:lightgrey, length(tumor))
+    colorsNode = Node(colors)
 
-    record(scene, "test.mp4") do io
+    scene = meshscatter(pointsNode, markersize = 1.0, color = colorsNode, scale_plot = false, shading=false)
+    xlims!(-30,30)
+    ylims!(-30,30)
+    scene[Axis][:ticks][:ranges] = (-20:4:20, -20:4:20)
+    display(scene)
+
+    #record(scene, "test.mp4") do io
         while !isempty(queue)
             root = popfirst!(queue)
             r1 = tumor[root].position
+
+            setindex!(colors, :blue, root)
 
             for n in shuffle!( findall(find_neighbors(cellbox, root; s=2)) )
                 r2 = tumor[n].position
                 d = r2.-r1
 
-                update_plot!(scene, tumor, root, n, queue; color=:orange, sleeptime=0.02)
-                recordframe!(io)
+                setindex!(colors, :orange, n)
+                colorsNode[] = colors
+                sleep(0.01)
+                # recordframe!(io)
+
                 if norm(d) < 2.
 
-                    update_plot!(scene, tumor, root, n, queue; color=:red,sleeptime=0.5)
-                    recordframe!(io)
+                    setindex!(colors, :red, n)
+                    colorsNode[] = colors
+                    sleep(0.01)
+                    # recordframe!(io)
 
                     r2 .+= d*(2.2/norm(d) - 1)#/2
                     #r1 .-= d*(2.2/norm(d) - 1)/2
                     cellbox[n] = pos2box(r2, dimv)
                     push!(queue, n)
 
-                    update_plot!(scene, tumor, root, n, queue; color=:red,sleeptime=0.5)
-                    recordframe!(io)
+                    setindex!(points, Point2f0(r2...), n)
+                    pointsNode[] = points
+                    sleep(0.01)
+                    setindex!(colors, :grey, n)
+                    # recordframe!(io)
+                else
+                    setindex!(colors, :lightgrey, n)
                 end
             end
+            setindex!(colors, :lightgrey, root)
         end
-        update_plot!(scene, tumor, root, Int[], queue; color=:red,sleeptime=0.5)
-        recordframe!(io)
-    end
+        # recordframe!(io)
+    #end
 end
 
 function pushing_recursive!_animate(tumor, root, cellbox, dimv::Val)
-    scene= Scene()
-    p = [Point(cell.position...) for cell in tumor]
-    meshscatter!(scene, p, markersize = 1.0, color = :lightgrey, scale_plot = false, shading=false)
-    queue = [root]
+    points = [Point2f0(cell.position...) for cell in tumor]
+    pointsNode = Node(points)
+    colors = fill(:lightgrey, length(tumor))
+    colorsNode = Node(colors)
+
+    scene = meshscatter(pointsNode, markersize = 1.0, color = colorsNode, scale_plot = false, shading=false)
+    xlims!(-30,30)
+    ylims!(-30,30)
+    scene[Axis][:ticks][:ranges] = (-20:4:20, -20:4:20)
+    display(scene)
+    queue = Int[]
     record(scene, "test_rec.mp4") do io
-        pushing_recursive!_animate_exec(scene, io, tumor, root, queue, cellbox, dimv)
-        update_plot!(scene, tumor, root, Int[], Int[]; color=:red,sleeptime=0.5)
+        pushing_recursive!_animate_exec(points, pointsNode, colors, colorsNode, io, tumor, root, cellbox, dimv, queue)
         recordframe!(io)
     end
 end
 
-function pushing_recursive!_animate_exec(scene, io, tumor, root, queue, cellbox, dimv)
+function pushing_recursive!_animate_exec(points, pointsNode, colors, colorsNode, io, tumor, root, cellbox, dimv, queue)
     r1 = tumor[root].position
+
+    colors[root] = :blue
+    push!(queue, root)
 
     N=length(tumor)
     for n in shuffle!( findall(find_neighbors(cellbox, root; s=2)) )
 
-        update_plot!(scene, tumor, root, n, queue; color=:orange,sleeptime=0.02)
+        setindex!(colors, :orange, n)
+        colorsNode[] = colors
+        sleep(0.01)
         recordframe!(io)
 
         r2 = tumor[n].position
         d = r2.-r1
         if norm(d) < 2.
 
-            update_plot!(scene, tumor, root, n, queue; color=:red,sleeptime=0.5)
+            setindex!(colors, :red, n)
+            colorsNode[] = colors
+            sleep(0.01)
             recordframe!(io)
 
-            push!(queue, n)
             r2 .+= d*(2.2/norm(d) - 1)#/2
             #r1 .-= d*(2.2/norm(d) - 1)/2
             cellbox[n] = pos2box(r2, dimv)
 
-            update_plot!(scene, tumor, root, n, queue; color=:red,sleeptime=0.5)
+            setindex!(points, Point2f0(r2...), n)
+            pointsNode[] = points
+            sleep(0.01)
+            setindex!(colors, :grey, root)
             recordframe!(io)
 
-            pushing_recursive!_animate_exec(scene, io, tumor, n, queue, cellbox, dimv)
-            pop!(queue)
+            pushing_recursive!_animate_exec(points, pointsNode, colors, colorsNode, io, tumor, n, cellbox, dimv, queue)
+        else
+            colors[n] = n in queue ? :grey : :lightgrey
         end
     end
+    pop!(queue)
+    colors[root] = :lightgrey
 end

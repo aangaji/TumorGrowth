@@ -9,7 +9,7 @@ using Revise
 
 #### 5000 cells 2d 30s runtime
 
-@time (index, mut, t), tumor, mut_events = birth_death_pushing(4000; b=0.69, d=0.0, mu=0.3, dim=2, seed=1010)
+@time (index, mut, t), tumor, mut_events = birth_death_pushing(100; b=0.69, d=0.0, mu=0.3, dim=2, seed=1010)
 
 bumor = deepcopy(tumor)
 

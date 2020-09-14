@@ -78,7 +78,8 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutation_events::Vector{Muta
             mutation_event && (cur_mutation += 1)
             #push!(mutation_events, mutation_event)
 
-            pushing!(tumor, N, cellbox, dimv)
+            pushing_recursive!_animate(tumor, N, cellbox, dimv)
+            #pushing!(tumor, N, cellbox, dimv)
         else
             N -= 1
             deleteat!.( (tumor, cellbox), parent_row)
