@@ -9,7 +9,7 @@ using Revise
 
 #### 5000 cells 2d 30s runtime
 
-@time (index, mut, t), tumor, mut_events = birth_death_pushing(100; b=0.69, d=0.0, mu=0.3, dim=2, seed=1010)
+@time (index, mut, t), tumor, mut_events = birth_death_pushing(5000; b=0.69, d=0.3, mu=0.3, ρc=1., dim=2, seed=1010)
 
 bumor = deepcopy(tumor)
 
@@ -17,14 +17,11 @@ birth_death_pushing!(bumor, mut_events, length(tumor)+1; b=0.69, d=0.0, mu=0.3, 
 
 birth_death_pushing(15.; b=0.69, d=0.0, mu=0.3, dim=3, seed=1010)
 
-using Plots: palette, distinguishable_colors
+using Plots
 
-b = tumor |> DataFrame
-fig = plotting_colored_mutations(b, colorpalette = palette(:tab20), shading=false, inline=true)
+tumordf = tumor |> DataFrame
+fig = plotting_colored_mutations(tumordf, colorpalette = palette(:tab20), shading=false, inline=false)
 
-# plotting_2d(tumor; annotate = false)
-# plotting_2d_colored_mutations(tumor)
-@show tumor
 
 #########################
 ##### TUMOUR SAVING #####
@@ -111,3 +108,28 @@ function show_clone!(scene, snapshot; mut)
 end
 
 record_growth(time_series; path="test.gif", plot_func! = (sc, sn) -> show_clone!(sc, sn; mut=2))
+
+#########################
+###### density ~ b ######
+#########################
+
+d, ρc = 0.2, 2.
+@time (index, mut, t), tumor, mut_events = birth_death_pushing(5000; b=0.69, d=d, mu=0.3, ρc=ρc, dim=2, seed=1010)
+
+cellbox = [TumorGrowth.pos2box(p, Val(2)) for p in getfield.(tumor,:position)]
+for (i, cell) in enumerate(tumor)
+    TumorGrowth.update_birthrate!(cell, view(tumor, TumorGrowth.find_neighbors(cellbox, i; s=4)); bup=0.69, ρc = ρc)
+end
+
+plot(-7.:0.01:7.,r-> TumorGrowth.w(r; σ=3.), fill=true)
+plot!(-9.:0.01:9.,r-> TumorGrowth.w(r; σ=3.), xticks=-7:2:7, legend=:none)
+
+tumordf = tumor |> DataFrame
+
+plotting_colored_mutations(tumordf, colorpalette = palette(:tab20), shading=false, inline=false)
+
+histogram(tumordf.b, alpha=0.3, lw=0.2, lab="b")
+vline!([sum(tumordf.b)/length(tumor)], lab="mean", c=:blue)
+vline!([d], lab="d", c=:black)
+
+plotting(tumordf; color = tumordf.b./maximum(tumordf.b), colormap = cgrad(:reds))
