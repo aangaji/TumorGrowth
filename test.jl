@@ -7,13 +7,15 @@ using Revise
 ####### SIMULATION ######
 #########################
 
+
+
 #### 5000 cells 2d 30s runtime
 
-@time (index, mut, t), tumor, mut_events = birth_death_pushing(5000; b=0.69, d=0.3, mu=0.3, ρc=1., dim=2, seed=1010)
+@time (index, mut, t), tumor = birth_death_pushing(2000; b=0.69, d=0.0, mu=0.3, ρc=1., dim=2, seed=1010)
 
 bumor = deepcopy(tumor)
 
-birth_death_pushing!(bumor, mut_events, length(tumor)+1; b=0.69, d=0.0, mu=0.3, dim=2, t=t, cur_id=index, cur_mutation=mut, seed=1002)
+birth_death_pushing!(bumor, length(tumor)+1; b=0.69, d=0.0, mu=0.3, dim=2, t=t, cur_id=index, cur_mutation=mut, seed=1002)
 
 birth_death_pushing(15.; b=0.69, d=0.0, mu=0.3, dim=3, seed=1010)
 
@@ -29,7 +31,7 @@ fig = plotting_colored_mutations(tumordf, colorpalette = palette(:tab20), shadin
 
 using DataFrames, CSV
 
-(index, mut, t), tumor, mut_events = birth_death_pushing(5000; b=0.3, d=0.0, mu=0.3, dim=2, seed=1234)
+(index, mut, t), tumor = birth_death_pushing(5000; b=0.3, d=0.0, mu=0.3, dim=2, seed=1234)
 CSV.write("test_2000_2d.csv", DataFrame(tumor), delim='\t')
 b = data_import("test_2000_2d.csv")
 @show b
@@ -114,7 +116,7 @@ record_growth(time_series; path="test.gif", plot_func! = (sc, sn) -> show_clone!
 #########################
 
 d, ρc = 0.2, 2.
-@time (index, mut, t), tumor, mut_events = birth_death_pushing(5000; b=0.69, d=d, mu=0.3, ρc=ρc, dim=2, seed=1010)
+@time (index, mut, t), tumor = birth_death_pushing(5000; b=0.69, d=d, mu=0.3, ρc=ρc, dim=2, seed=1010)
 
 cellbox = [TumorGrowth.pos2box(p, Val(2)) for p in getfield.(tumor,:position)]
 for (i, cell) in enumerate(tumor)

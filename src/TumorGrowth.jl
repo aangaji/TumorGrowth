@@ -2,7 +2,7 @@ module TumorGrowth
 
 begin
 print("Loading Packages... ")
-import DataFrames: DataFrame, DataFrameRow
+import DataFrames: DataFrame, DataFrame!, DataFrameRow
 using CSV
 using Plots: palette, distinguishable_colors
 using Makie
@@ -30,7 +30,7 @@ export data_import
 
 #function to import a saved tumor from a .csv file
 function data_import(path::String)
-    data = path |> CSV.File |> DataFrame!
+    data = CSV.File(path, delim="\t") |> DataFrame!
     fields = names(data)
     types = typeof.([first(data)[field] for field in fields])
 

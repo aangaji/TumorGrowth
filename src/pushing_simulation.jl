@@ -49,7 +49,12 @@ function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, mu, cellbox, 
     push!(cellbox, pos2box(pos, dimv))
 
     if rand() < mu
-        new = Cell(cur_id, copy(pos), push(parent.mutations, cur_mutation+1), parent.index, parent.b, t, SVector{dim,Float64}(pos))
+        if rand(Bool)
+        	new = Cell(cur_id, copy(pos), push(parent.mutations, cur_mutation+1), parent.index, parent.b, t, SVector{dim,Float64}(pos))
+		else
+			new = Cell(cur_id, copy(pos), parent.mutations, parent.index, parent.b, t, SVector{dim,Float64}(pos))
+			parent.mutations = push(parent.mutations, cur_mutation+1)
+		end
         push!(tumor, new)
         return true
     else
@@ -60,7 +65,7 @@ function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, mu, cellbox, 
     # return Mutation_event(cur_mutation+1, cur_id, t, pos)
 end
 
-function birth_death_pushing!( tumor::Vector{Cell}, mutation_events::Vector{Mutation_event}, until; b, d, mu, ρc=20., cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position), seed=nothing)
+function birth_death_pushing!( tumor::Vector{Cell}, until; b, d, mu, ρc=20., cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position), seed=nothing)
     dimv = Val(dim)
 
     isnothing(seed) || Random.seed!(seed)
@@ -87,7 +92,6 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutation_events::Vector{Muta
             mutation_event = birth!(tumor, parent, cur_id, cur_mutation, mu, cellbox, t, dimv)
 
             mutation_event && (cur_mutation += 1)
-            #push!(mutation_events, mutation_event)
 
             pushing!(tumor, N, cellbox, dimv)
         elseif p < d
@@ -98,6 +102,9 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutation_events::Vector{Muta
         #@info "Tumor size" progress=N/tumor_size _id=id
         ProgressMeter.update!(prog, N )
     end
+	for (i, cell) in enumerate(tumor)
+	    update_birthrate!(cell, view(tumor, find_neighbors(cellbox, i; s=4)); bup=b, ρc = ρc)
+	end
     return (cur_id, cur_mutation, t)
 end
 
@@ -110,9 +117,7 @@ function birth_death_pushing( until; b, d, mu, ρc=20., cur_mutation = 0, dim , 
     p₀ = zeros(Float64,dim)
     tumor = [Cell(index=1, position=p₀, parent=0, mutations=SVector{cur_mutation, Int64}(1:cur_mutation...), b=b, t_birth=0.0, p_birth=SVector{dim,Float64}(p₀))]
 
-    mutation_events = Vector{Mutation_event}()
+    cur_id, cur_mutation, t = birth_death_pushing!(tumor, until; b=b, d=d, mu=mu, ρc=ρc, cur_mutation=cur_mutation, dim=dim, seed=seed)
 
-    cur_id, cur_mutation, t = birth_death_pushing!(tumor, mutation_events, until; b=b, d=d, mu=mu, ρc=ρc, cur_mutation=cur_mutation, dim=dim, seed=seed)
-
-    return (cur_id, cur_mutation, t), tumor, mutation_events
+    return (cur_id, cur_mutation, t), tumor
 end
