@@ -9,9 +9,10 @@ function plotting!(scene, tumor; path="", color=nothing, colormap=distinguishabl
     meshscatter!(scene, p, markersize = 1.0, color = color, colormap=colormap, scale_plot = false, shading=shading)
     isempty(path) || save(path, scene)
 end
-function plotting(tumor; path="", color=nothing, colormap=distinguishable_colors(68), shading=false, inline=false)
+function plotting(tumor; size=(500,500), path="", color=nothing, colormap=distinguishable_colors(68), shading=false, inline=false)
     AbstractPlotting.inline!(inline)
     scene = Scene()
+    resize!(scene, size)
     plotting!(scene, tumor; path=path, color=color, colormap=colormap, shading=shading)
     return scene
 end
@@ -29,9 +30,10 @@ function plotting_colored_mutations!(scene, tumor; colorpalette = palette(:tab20
     isempty(path) || save(path, scene)
 end
 
-function plotting_colored_mutations(tumor; colorpalette=palette(:tab10), path="", shading = false, limits = automatic, inline=false)
+function plotting_colored_mutations(tumor; size=(500,500), colorpalette=palette(:tab10), path="", shading = false, limits = automatic, inline=false)
     AbstractPlotting.inline!(inline)
     scene = Scene()
+    resize!(scene, size)
     plotting_colored_mutations!(scene, tumor; colorpalette = colorpalette, path=path, shading = shading, limits = limits)
     return scene
 end

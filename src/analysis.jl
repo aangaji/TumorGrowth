@@ -1,4 +1,4 @@
-export mutation_freqs, clone, clones
+export mutation_freqs, clone, clones, haplotypes, clones_by_mutations
 
 function mutation_freqs(tumor)
     allmuts = vcat(tumor.mutations...)
@@ -35,4 +35,20 @@ function clones(tumor; sub=1)
 
     length(out)==1 && return clones(tumor; sub=sub+1)
     return out
+end
+
+function haplotypes(tumor; res=0.0)
+    mutations = sort(unique(vcat(tumor.mutations...)))
+    mutations = mutations[res .< mutation_freqs(tumor)]
+
+    types = mutations .|> m -> filter(r -> !isempty(r.mutations) && last(r.mutations) == m, tumor)
+    filter!(t -> !isempty(t), types), getproperty.(first.(types),:mutations)
+end
+
+function clones_by_mutations(tumor; res=0.0)
+    mutations = sort(unique(vcat(tumor.mutations...)))
+    mutations = mutations[res .< mutation_freqs(tumor)]
+
+    types = mutations .|> m -> filter(r -> m in r.mutations, tumor)
+    sort!(by=size, types, rev=true), mutations
 end
