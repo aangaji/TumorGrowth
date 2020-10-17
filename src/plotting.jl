@@ -1,6 +1,5 @@
 export plotting, plotting!, plotting_colored_mutations, plotting_colored_mutations!
 
-#function to plot a tumor with color determined by the latest mutation of the cell
 function plotting!(scene, tumor; path="", color=nothing, colormap=distinguishable_colors(68), shading = false)
     isempty(tumor) && return
     p = (tumor isa DataFrameRow) ? [Point(tumor.position...)] : [Point(pos...) for pos in tumor.position]
@@ -16,9 +15,6 @@ function plotting(tumor; size=(500,500), path="", color=nothing, colormap=distin
     plotting!(scene, tumor; path=path, color=color, colormap=colormap, shading=shading)
     return scene
 end
-
-
-#function to plot the tumor similar to Ling et al. (2015), color code in experiments
 
 function plotting_colored_mutations!(scene, tumor; colorpalette = palette(:tab20), path="", shading = false, limits = automatic, sub=1)
     isempty(tumor) && return

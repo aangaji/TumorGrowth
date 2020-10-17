@@ -4,6 +4,8 @@ using BenchmarkTools
 
 @time using TumorGrowth
     # 83.128724 seconds (40.55 M allocations: 2.109 GiB, 1.01% gc time)
+    # 27.123793 seconds (58.74 M allocations: 3.013 GiB, 4.57% gc time)
+    # 50.520389 seconds (51.40 M allocations: 2.660 GiB, 2.21% gc time)
 
 @benchmark birth_death_pushing(2000; b=0.69, d=0.1, mu=0.3, ρc=1., dim=2, seed = 1010) seconds=120
 

@@ -10,7 +10,6 @@ isneighbor(neighbox::NTuple{dim,Int}; rootbox::NTuple{dim,Int}, s=2) where dim =
 
 function pushing!(tumor, root, cellbox, dimv::Val)
     queue = [root]
-    N = length(tumor)
     while !isempty(queue)
         root = popfirst!(queue)
         r1 = tumor[root].position
@@ -24,6 +23,7 @@ function pushing!(tumor, root, cellbox, dimv::Val)
                 cellbox[n] = pos2box(r2, dimv)
                 #cellbox[root] = pos2box(r1;dimv=Val(dim))
                 push!(queue, n)
+				#push!(queue, n)
             end
         end
     end

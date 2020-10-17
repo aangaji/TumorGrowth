@@ -65,7 +65,7 @@ function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, mu, cellbox, 
     # return Mutation_event(cur_mutation+1, cur_id, t, pos)
 end
 
-function birth_death_pushing!( tumor::Vector{Cell}, until; b, d, mu, ρc=20., cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position), seed=nothing)
+function birth_death_pushing!( tumor::Vector{Cell}, until; b, d, mu, ρc=Inf, cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position), seed=nothing)
     dimv = Val(dim)
 
     isnothing(seed) || Random.seed!(seed)
@@ -113,7 +113,7 @@ loop_condition(N,t, Nfinal::Int) = N < Nfinal
 loop_condition(N,t, tfinal::Float64) = t < tfinal
 
 
-function birth_death_pushing( until; b, d, mu, ρc=20., cur_mutation = 0, dim , seed=nothing)
+function birth_death_pushing( until; b, d, mu, ρc=Inf, cur_mutation = 0, dim , seed=nothing)
     p₀ = zeros(Float64,dim)
     tumor = [Cell(index=1, position=p₀, parent=0, mutations=SVector{cur_mutation, Int64}(1:cur_mutation...), b=b, t_birth=0.0, p_birth=SVector{dim,Float64}(p₀))]
 
