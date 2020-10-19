@@ -130,3 +130,30 @@ vline!([sum(tumordf.b)/length(tumor)], lab="mean", c=:blue)
 vline!([d], lab="d", c=:black)
 
 plotting(tumordf; color = tumordf.b./maximum(tumordf.b), colormap = cgrad(:reds))
+
+
+
+# mulit region sampling
+
+using Makie
+
+d, ρc = 0.1, 1.8
+@time tumor = birth_death_pushing(5000; b=0.69, d=d, mu=0.3, ρc=ρc, dim=2, seed=1010)[2] |> DataFrame
+
+lattice, samples = multi_region_sampling(tumor; n = 100, cells_per_sample = 20)
+
+scene = plotting_colored_mutations(tumor)
+for sample in samples
+    plotting!(scene, sample; color=:black)
+end
+display(scene)
+
+sample_r = 2*sqrt(20/π)
+cm = mean(tumor.position)
+density = size(punch(tumor; pos=cm, r=10.), 1)/(π*10. ^2)
+R = sqrt(size(tumor,1)/(π*density))
+scene = plotting_colored_mutations(tumor)
+meshscatter!([Point{2}.(lattice)...], markersize = sample_r, scale_plot = false)
+meshscatter!(0:0.2:360 .|> ϕ-> Point{2}(R .*(cosd(ϕ),sind(ϕ)) .+ cm), markersize = 1. )
+
+# save("multi_region_sampling.png", scene)
