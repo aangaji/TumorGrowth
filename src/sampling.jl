@@ -70,5 +70,6 @@ function multi_region_sampling(tumor; n=0, a=0., cells_per_sample=0, sample_r=a/
     filter!(p -> p in Makie.Circle(Point{2}(cm), R - a/2), lattice)
 
     samples = lattice .|> p -> punch(tumor; pos=p, r=sample_r)
+
     return lattice, samples
 end

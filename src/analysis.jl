@@ -1,10 +1,17 @@
-export mutation_freqs, clone, clones, haplotypes, clones_by_mutations
+export mutation_freqs, sequencing, clone, clones, haplotypes, clones_by_mutations
 
 function mutation_freqs(tumor)
     allmuts = vcat(tumor.mutations...)
-    bins = sort(unique(allmuts)) |> u -> vcat(u, u[end]+1)
+    muts = allmuts |> unique |> sort
+    bins = vcat(muts, muts[end]+1)
     hist = fit(Histogram, allmuts, bins, closed=:left)
-    return hist.weights ./ size(tumor, 1)
+    return muts , hist.weights ./ size(tumor, 1)
+end
+
+function sequencing(tumor; lowercutoff = 0.0)
+    mutations, frequencies = mutation_freqs(tumor)
+    return filter!(c -> c.frequencies > lowercutoff,
+                    DataFrame(mutations = mutations, frequencies = frequencies))
 end
 
 

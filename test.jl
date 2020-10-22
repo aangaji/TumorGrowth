@@ -1,4 +1,4 @@
-using Pkg; Pkg.activate(pwd()); Pkg.update(); Pkg.instantiate()
+using Pkg; Pkg.activate(pwd()); Pkg.instantiate()
 using Revise
 
 @time using TumorGrowth
@@ -135,12 +135,13 @@ plotting(tumordf; color = tumordf.b./maximum(tumordf.b), colormap = cgrad(:reds)
 
 # mulit region sampling
 
-using Makie
+using Makie, Statistics
 
-d, ρc = 0.1, 1.8
-@time tumor = birth_death_pushing(5000; b=0.69, d=d, mu=0.3, ρc=ρc, dim=2, seed=1010)[2] |> DataFrame
+@time tumor = birth_death_pushing(5000; b=0.69, d=0.1, mu=0.3, ρc=1.8, dim=2, seed=1010)[2] |> DataFrame
 
 lattice, samples = multi_region_sampling(tumor; n = 100, cells_per_sample = 20)
+
+mean(size.(samples,1))
 
 scene = plotting_colored_mutations(tumor)
 for sample in samples
@@ -157,3 +158,14 @@ meshscatter!([Point{2}.(lattice)...], markersize = sample_r, scale_plot = false)
 meshscatter!(0:0.2:360 .|> ϕ-> Point{2}(R .*(cosd(ϕ),sind(ϕ)) .+ cm), markersize = 1. )
 
 # save("multi_region_sampling.png", scene)
+
+lattice, samples = multi_region_sampling(tumor; n = 100, cells_per_sample = 20)
+seq_results = samples .|> s-> sequencing(s ; lowercutoff = 0.0)
+
+sampletumor = DataFrame(index = 1:length(samples), position = lattice, mutations = getproperty.(seq_results, :mutations), frequencies = getproperty.(seq_results, :frequencies))
+
+density = size(punch(tumor; pos = mean(tumor.position), r = 20.), 1)/(π*20^2)
+scene = plotting_colored_mutations(sampletumor; markersize = sqrt(20/density/π), shading = true)
+plotting_colored_mutations!(scene, tumor)
+
+# save("multi_region_sequencing.png", scene)
