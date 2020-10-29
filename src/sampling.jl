@@ -52,7 +52,8 @@ end
 function multi_region_sampling(tumor; n=0, a=0., cells_per_sample=0, sample_r=a/2)
 
     cm = mean(tumor.position)
-    density = size(punch(tumor; pos=cm, r=10.), 1)/(π*10. ^2)
+    r = mean(norm.(p .- cm for p in tumor.position))
+    density = size(punch(tumor; pos=cm, r=r), 1)/(π*r ^2)
     R = sqrt(size(tumor,1)/(π*density))
 
     sample_r = iszero(cells_per_sample) ? a/2 : sqrt(cells_per_sample/(π*density))

@@ -132,10 +132,12 @@ vline!([d], lab="d", c=:black)
 plotting(tumordf; color = tumordf.b./maximum(tumordf.b), colormap = cgrad(:reds))
 
 
+#############################
+### mulit region sampling ###
+#############################
 
-# mulit region sampling
-
-using Makie, Statistics
+using Makie: meshscatter, meshscatter!, save, Point
+using Statistics
 
 @time tumor = birth_death_pushing(5000; b=0.69, d=0.1, mu=0.3, ρc=1.8, dim=2, seed=1010)[2] |> DataFrame
 
@@ -160,12 +162,43 @@ meshscatter!(0:0.2:360 .|> ϕ-> Point{2}(R .*(cosd(ϕ),sind(ϕ)) .+ cm), markers
 # save("multi_region_sampling.png", scene)
 
 lattice, samples = multi_region_sampling(tumor; n = 100, cells_per_sample = 20)
-seq_results = samples .|> s-> sequencing(s ; lowercutoff = 0.0)
+seq_results = filter!.(c->c.frequency > 0.0, mutation_freqs.(samples))
 
-sampletumor = DataFrame(index = 1:length(samples), position = lattice, mutations = getproperty.(seq_results, :mutations), frequencies = getproperty.(seq_results, :frequencies))
+sampletumor = DataFrame(index = 1:length(samples), position = lattice, mutations = getproperty.(seq_results, :mutation), frequencies = getproperty.(seq_results, :frequency))
 
 density = size(punch(tumor; pos = mean(tumor.position), r = 20.), 1)/(π*20^2)
 scene = plotting_colored_mutations(sampletumor; markersize = sqrt(20/density/π), shading = true)
 plotting_colored_mutations!(scene, tumor)
 
 # save("multi_region_sequencing.png", scene)
+
+
+##################################
+## Reduce mutation artificially ##
+##################################
+
+b, d, μ = 0.69, 0.1, 1.0
+@time tumor = birth_death_pushing(5000; b=b, d=d, mu=μ, ρc=Inf, dim=2)[2] |> DataFrame
+
+x = 0.1
+tumor_reduced = reduced_μ(tumor, x)
+
+function M!(fig, f; res=0.0, nBins = 100, lab=:none, color=:auto)
+        hist = fit(Histogram, 1 ./ f[res.<f], nbins=nBins, closed=:left)
+        M = [ sum(hist.weights[1:n]) for n=1:length(hist.weights)]
+        plot!(fig, midpoints(hist.edges[1]), M,
+                marker=(:o), ms=1.5, lab=lab, c=color, xlabel="1/f", ylabel="M(f)", legend=:bottomright)
+end
+M(f; res=0.0, nBins = 100, lab=:none, color=:auto) = M!(plot(), f; res=res, nBins = nBins, lab=lab, color=color)
+
+using Plots: plot, plot!
+using StatsBase
+
+fig = tumor |> mutation_freqs |> df -> M(df.frequency; res = 0.001)
+plot!(collect(0:1:1/0.001), finv -> μ*b/(b-d) *(finv - 1), lab=:none)
+tumor_reduced |> mutation_freqs |> df -> M!(fig, df.frequency; res = 0.001)
+plot!(collect(0:1:1/0.001), finv -> μ*x*b/(b-d) *(finv - 1), lab=:none)
+
+plotting_colored_mutations(tumor)
+
+plotting_colored_mutations(tumor_reduced)

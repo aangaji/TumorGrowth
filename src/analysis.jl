@@ -1,18 +1,34 @@
-export mutation_freqs, sequencing, clone, clones, haplotypes, clones_by_mutations
+export mutation_freqs, multi_region_sequencing, reduced_μ, reduced_μ!, clone, clones, haplotypes, clones_by_mutations
 
 function mutation_freqs(tumor)
     allmuts = vcat(tumor.mutations...)
+    isempty(allmuts) && return DataFrame(mutation = Int[], frequency = Float64[])
     muts = allmuts |> unique |> sort
     bins = vcat(muts, muts[end]+1)
     hist = fit(Histogram, allmuts, bins, closed=:left)
-    return muts , hist.weights ./ size(tumor, 1)
+    return DataFrame(mutation = muts , frequency = hist.weights ./ size(tumor, 1))
 end
 
-function sequencing(tumor; lowercutoff = 0.0)
-    mutations, frequencies = mutation_freqs(tumor)
-    return filter!(c -> c.frequencies > lowercutoff,
-                    DataFrame(mutations = mutations, frequencies = frequencies))
+function multi_region_sequencing(tumor; n=0, a=0., cells_per_sample=0, sample_r=a/2, res=0.0)
+    lattice, samples = multi_region_sampling(tumor; n=n, a=a, cells_per_sample=cells_per_sample, sample_r=sample_r)
+    seq_results = filter!.(c->c.frequency > res, mutation_freqs.(samples))
+    sampletumor = DataFrame(index = 1:length(samples), position = lattice, mutations = getproperty.(seq_results, :mutation), frequencies = getproperty.(seq_results, :frequency))
+
+    return samples, sampletumor
 end
+
+
+function reduced_μ!(tumor, x)
+    tumor |> mutation_freqs |>
+        seq -> filter!(_-> rand()<x, seq) |>
+        seq_red -> begin
+            for muts in tumor.mutations
+                filter!(m-> m in seq_red.mutation, muts)
+            end
+        end
+    tumor
+end
+reduced_μ(tumor, x) = reduced_μ!(deepcopy(tumor), x)
 
 
 function find_mut(tumor, mut)
@@ -45,17 +61,15 @@ function clones(tumor; sub=1)
 end
 
 function haplotypes(tumor; res=0.0)
-    mutations = sort(unique(vcat(tumor.mutations...)))
-    mutations = mutations[res .< mutation_freqs(tumor)]
+    mutations = filter!(c-> c.frequency > res, mutation_freqs(tumor)).mutation
 
     types = mutations .|> m -> filter(r -> !isempty(r.mutations) && last(r.mutations) == m, tumor)
     filter!(t -> !isempty(t), types), getproperty.(first.(types),:mutations)
 end
 
 function clones_by_mutations(tumor; res=0.0)
-    mutations = sort(unique(vcat(tumor.mutations...)))
-    mutations = mutations[res .< mutation_freqs(tumor)]
+    mutations = filter!(c-> c.frequency > res, mutation_freqs(tumor)).mutation
 
     types = mutations .|> m -> filter(r -> m in r.mutations, tumor)
-    sort!(by=size, types, rev=true), mutations
+    types, mutations
 end
