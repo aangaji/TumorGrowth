@@ -7,16 +7,17 @@ using Revise
 ####### SIMULATION ######
 #########################
 
-
-@time (index, mut, t), tumor = birth_death_pushing(3000; b=0.69, d=0.0, mu=0.3, ρc=2., dim=2, seed=1010)
+@time simoutput = birth_death_pushing(1000; b=0.69, d=0.0, μ=0.3, ρc=1., dim=2, seed=1010)
+tumor = simoutput[:tumor]
 
 bumor = deepcopy(tumor)
 
-birth_death_pushing!(bumor, length(tumor)+1; b=0.69, d=0.0, mu=0.3, dim=2, t=t, cur_id=index, cur_mutation=mut, seed=1002)
+birth_death_pushing!(bumor, length(tumor)+1; b=0.69, d=0.0, μ=0.3, dim=2, t=t, cur_id=index, cur_mutation=mut, seed=1002)
 
-birth_death_pushing(15.; b=0.69, d=0.0, mu=0.3, dim=3, seed=1010)
+birth_death_pushing(15.; b=0.69, d=0.0, μ=0.3, dim=3, seed=1010)
 
 using Plots: palette
+
 
 tumordf = tumor |> DataFrame
 fig = plotting_colored_mutations(tumordf, colorpalette = palette(:tab20), shading=false, inline=false)
@@ -28,8 +29,8 @@ fig = plotting_colored_mutations(tumordf, colorpalette = palette(:tab20), shadin
 
 using DataFrames, CSV
 
-(index, mut, t), tumor = birth_death_pushing(2000; b=0.3, d=0.0, mu=0.3, ρc=1.8, dim=2, seed=1234)
-CSV.write("test_2000_2d.csv", DataFrame(tumor), delim='\t')
+tumor = birth_death_pushing(5000; b=0.3, d=0.0, μ=0.3, ρc=6., dim=3, seed=1234)[:tumor]
+CSV.write("test_5000_3d.csv", DataFrame(tumor), delim='\t')
 b = data_import("test_2000_2d.csv")
 @show b
 
@@ -42,11 +43,11 @@ b = data_import("test_2000_2d.csv")
 
 b = data_import("test_2000_2d.csv")
 @time plotting(b)
-@time plotting_colored_mutations(b, shading = false)
+@time plotting_colored_mutations(b, shading = false, path="test_2000_2d.png")
 
 b = data_import("test_5000_3d.csv")
 @time plotting(b)
-@time plotting_colored_mutations(b, shading=true)
+@time plotting_colored_mutations(b, shading=true, path="test_5000_3d.png")
 
 ########################
 ####### Sampling #######
@@ -101,27 +102,46 @@ clones(b)[10] |> clones .|> t -> plotting!(fig, t, color=:black)
 ###### time series ######
 #########################
 
-time_series = tumor_stepper(0.0:0.1:10.; b=0.69, d=0.0, mu=0.6, dim=2, seed = 1000)
+using DataFrames, Makie
+using Plots: palette, distinguishable_colors
 
-function show_clone!(scene, snapshot; mut)
-    plotting_colored_mutations!(scene, snapshot)
-    plotting!(scene, clone(snapshot,mut); color=:black)
-end
+time_series = tumor_stepper(0.0:0.1:40.; b=0.69, d=0.0, μ=0.3, ρc=1.7, dim=2, seed = 1000)
 
-record_growth(time_series; path="test.gif", plot_func! = (sc, sn) -> show_clone!(sc, sn; mut=2))
+record_growth(time_series; path="test.gif",
+        frames=1, shading=false,
+        points_colors = t-> colors_by_mutations(t; colorpalette = distinguishable_colors(64))
+        )
+
 
 #########################
 ###### density ~ b ######
 #########################
 
-d, ρc = 0.2, 2.
-@time (index, mut, t), tumor = birth_death_pushing(5000; b=0.69, d=d, mu=0.3, ρc=ρc, dim=2, seed=1010)
-
 using Plots
+
+TumorGrowth.b_linear()
+TumorGrowth.b_hill(6)
+TumorGrowth.b_curve(1.; bup=1., ρc=1.1)
+
+d, ρc = 0.0, 1.
+@time tumor = birth_death_pushing(5000; b=0.69, d=d, μ=0.3, ρc=ρc, dim=2)[:tumor]
+tumordf = tumor |> DataFrame
+
+# power law / surface growth
+plot(log.(tumordf.t_birth), log.(1:length(tumor)), legend=:none )
+plot!(log.(tumordf.t_birth), t -> 2*t, xlims=(0., 4.))
+
+# exponential / bulk
+plot!(tumordf.t_birth, log.(1:5000), legend=:none )
+plot!(tumordf.t_birth, t -> (log(2) - d)*t )
+
 plot(-7.:0.01:7.,r-> TumorGrowth.w(r; σ=3.), fill=true)
 plot!(-9.:0.01:9.,r-> TumorGrowth.w(r; σ=3.), xticks=-7:2:7, legend=:none)
 
-tumordf = tumor |> DataFrame
+TumorGrowth.b_linear()
+TumorGrowth.b_hill(6)
+plot(0.:0.01:9., ρ-> TumorGrowth.b_curve(ρ; bup=1., ρc=1.), legend=:none)
+vline!([1.])
 
 plotting_colored_mutations(tumordf, colorpalette = palette(:tab20), shading=false, inline=false)
 
@@ -139,7 +159,7 @@ plotting(tumordf; color = tumordf.b./maximum(tumordf.b), colormap = cgrad(:reds)
 using Makie: meshscatter, meshscatter!, save, Point
 using Statistics
 
-@time tumor = birth_death_pushing(5000; b=0.69, d=0.1, mu=0.3, ρc=1.8, dim=2, seed=1010)[2] |> DataFrame
+@time tumor = birth_death_pushing(5000; b=0.69, d=0.1, μ=0.3, ρc=1.8, dim=2, seed=1010)[2] |> DataFrame
 
 lattice, samples = multi_region_sampling(tumor; n = 100, cells_per_sample = 20)
 
@@ -172,13 +192,12 @@ plotting_colored_mutations!(scene, tumor)
 
 # save("multi_region_sequencing.png", scene)
 
-
 ##################################
 ## Reduce mutation artificially ##
 ##################################
 
 b, d, μ = 0.69, 0.1, 1.0
-@time tumor = birth_death_pushing(5000; b=b, d=d, mu=μ, ρc=Inf, dim=2)[2] |> DataFrame
+@time tumor = birth_death_pushing(5000; b=b, d=d, μ=μ, ρc=Inf, dim=2)[:tumor] |> DataFrame
 
 x = 0.1
 tumor_reduced = reduced_μ(tumor, x)

@@ -1,7 +1,7 @@
 module TumorGrowth
 
 print("Loading Packages... ")
-import DataFrames: DataFrame, DataFrame!, DataFrameRow
+import DataFrames: DataFrame, DataFrame!, DataFrameRow, nrow
 using CSV
 using Plots: palette, distinguishable_colors
 using Makie
@@ -15,7 +15,7 @@ using ProgressMeter
 println("Done!")
 
 (
-    "pushing_simulation.jl",
+    "simulation.jl",
     "plotting.jl",
     "pushing.jl",
     "pushing_animate.jl",
@@ -28,8 +28,8 @@ println("Done!")
 export data_import
 
 #function to import a saved tumor from a .csv file
-function data_import(path::String)
-    data = CSV.File(path, delim="\t") |> DataFrame!
+function data_import(path::String; delim="\t")
+    data = CSV.File(path, delim=delim) |> DataFrame!
     fields = names(data)
     types = typeof.([first(data)[field] for field in fields])
 

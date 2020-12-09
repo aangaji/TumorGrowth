@@ -20,7 +20,7 @@ end
 
 function reduced_μ!(tumor, x)
     tumor |> mutation_freqs |>
-        seq -> filter!(_-> rand()<x, seq) |>
+        seq -> filter!(_-> rand()<=x, seq) |>
         seq_red -> begin
             for muts in tumor.mutations
                 filter!(m-> m in seq_red.mutation, muts)
@@ -45,7 +45,7 @@ clone(tumor, mut; sub = find_mut(tumor, mut) ) = filter(r -> isnothing(sub) || l
 
 # clones returns all subclones with unique mutations as "sub"th mutation and one subclone with less than "sub" mutations (clonal or no mutations)
 
-function clones(tumor; sub=1)
+function clones(tumor; sub=1, autodepth=true)
 
     out = Vector{DataFrame}()
     !isnothing(findfirst(length.(tumor.mutations).<sub)) && push!(out, clone(tumor, nothing, sub=sub))
@@ -56,15 +56,23 @@ function clones(tumor; sub=1)
         push!(out, clone(tumor, mut, sub=sub))
     end
 
-    length(out)==1 && return clones(tumor; sub=sub+1)
+    autodepth && length(out)==1 && return clones(tumor; sub=sub+1)
     return out
 end
 
-function haplotypes(tumor; res=0.0)
-    mutations = filter!(c-> c.frequency > res, mutation_freqs(tumor)).mutation
+# function haplotypes(tumor; res=0.0)
+#     mutations = filter!(c-> c.frequency > res, mutation_freqs(tumor)).mutation
+#
+#     types = mutations .|> m -> filter(r -> !isempty(r.mutations) && last(r.mutations) == m, tumor)
+#     filter!(t -> !isempty(t), types), getproperty.(first.(types),:mutations)
+# end
 
-    types = mutations .|> m -> filter(r -> !isempty(r.mutations) && last(r.mutations) == m, tumor)
-    filter!(t -> !isempty(t), types), getproperty.(first.(types),:mutations)
+function haplotypes(tumor; res=0.0)
+    type_muts = unique(tumor.mutations)
+     filter!(!isempty, type_muts)
+    types = type_muts .|> m-> filter(c-> c.mutations == m , tumor)
+    select = nrow.(types)./nrow(tumor) .>= res
+    types[select], type_muts[select]
 end
 
 function clones_by_mutations(tumor; res=0.0)
