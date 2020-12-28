@@ -83,7 +83,7 @@ function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, μ, cellbox, 
     # return Mutation_event(cur_mutation+1, cur_id, t, pos)
 end
 
-function birth_death_pushing!( tumor::Vector{Cell}, until; b, d, μ, ρc=Inf, cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position), seed=nothing)
+function birth_death_pushing!( tumor::Vector{Cell}, times, Ns, until; b, d, μ, ρc=Inf, cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position), seed=nothing)
     dimv = Val(dim)
 
     isnothing(seed) || Random.seed!(seed)
@@ -112,10 +112,14 @@ function birth_death_pushing!( tumor::Vector{Cell}, until; b, d, μ, ρc=Inf, cu
             mutation_event && (cur_mutation += 1)
 
             pushing!(tumor, N, cellbox, dimv)
+
         elseif p < d
             N -= 1
             deleteat!.( (tumor, cellbox), row)
         end
+		push!(times, t)
+		push!(Ns, N)
+
         #print("Progress: $(size(tumor,1))/$tumor_size | Recent mutation: $cur_mutation \r")
         #@info "Tumor size" progress=N/tumor_size _id=id
         ProgressMeter.update!(prog, N )
@@ -123,7 +127,7 @@ function birth_death_pushing!( tumor::Vector{Cell}, until; b, d, μ, ρc=Inf, cu
 	for (i, cell) in enumerate(tumor)
 	    update_birthrate!(cell, view(tumor, find_neighbors(cellbox, i; s=4)); bup=b, ρc = ρc)
 	end
-    return Dict{Symbol, Any}(:index => cur_id, :mutation => cur_mutation, :time => t)
+    return Dict{Symbol, Any}(:index => cur_id, :mutation => cur_mutation, :times => times, :sizes => Ns)
 end
 
 loop_condition(N,t, Nfinal::Int) = N < Nfinal
@@ -134,7 +138,10 @@ function birth_death_pushing( until; b, d, μ, ρc=Inf, cur_mutation = 0, dim , 
     p₀ = zeros(Float64,dim)
     tumor = [Cell(index=1, position=p₀, parent=0, mutations=SVector{cur_mutation, Int64}(1:cur_mutation...), b=b, t_birth=0.0, p_birth=SVector{dim,Float64}(p₀))]
 
-    output = birth_death_pushing!(tumor, until; b=b, d=d, μ=μ, ρc=ρc, cur_mutation=cur_mutation, dim=dim, seed=seed)
+	times = [0.0]
+	Ns = [1]
+
+    output = birth_death_pushing!(tumor, times, Ns, until; b=b, d=d, μ=μ, ρc=ρc, cur_mutation=cur_mutation, dim=dim, seed=seed)
 	output[:tumor] = tumor
 
 	return output
