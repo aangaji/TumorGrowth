@@ -27,7 +27,7 @@ println("Done!")
 
 export data_import
 
-#function to import a saved tumor from a .csv file
+# function to import a saved tumor from a .csv file
 function data_import(path::String; delim="\t")
     data = CSV.File(path, delim=delim) |> DataFrame!
     fields = names(data)
