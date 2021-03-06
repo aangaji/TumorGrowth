@@ -84,11 +84,11 @@ radial_sample(b; r=20., width=3.) |> data->cross_section(data; x=10., width=6.) 
 ####### Analysis #######
 ########################
 
-b = data_import("test_5000_3d.csv")
+tumor = data_import("test_5000_3d.csv")
 
-b |> mutation_freqs
+tumor |> mutation_freqs
+tumor |> stochastic_sequencing
 
-tumordf |> mutation_freqs
 function M!(fig, f; res=0.0, nBins = 100, lab=:none, color=:auto, normalize=false)
         hist = fit(Histogram, 1 ./ f[res.<f], nbins=nBins, closed=:left)
         M = [ sum(hist.weights[1:n]) for n=1:length(hist.weights)]
@@ -99,11 +99,12 @@ end
 M(f; res=0.0, nBins = 100, lab=:none, color=:auto, normalize=false) = M!(plot(), f; res=res, nBins = nBins, lab=lab, color=color, normalize=normalize)
 
 using Plots, StatsBase, Statistics
-M(mutation_freqs(tumordf)[:,2]; res=0.0005)
-b=0.69
-d=0.0
-μ=0.1
+M(mutation_freqs(tumor).frequency; res=0.0005)
+b, d, μ=0.69, 0.00, 00.3
 plot!(1:1000, n->μ*b/(b-d)*n )
+
+f = filter(m -> m.reads > 1, stochastic_sequencing(tumor, readdepth=1000)).frequency
+M(stochastic_sequencing(tumor, readdepth=2000).frequency; res=0.001)
 
 ########################
 ######## clones ########
@@ -181,9 +182,11 @@ plotting(tumordf; color = tumordf.b./maximum(tumordf.b), colormap = cgrad(:reds)
 using Makie: meshscatter, meshscatter!, save, Point
 using Statistics
 
-@time tumor = birth_death_pushing(5000; b=0.69, d=0.1, μ=0.3, ρc=1.8, dim=2, seed=1010)[2] |> DataFrame
+@time tumor = birth_death_pushing(5000; b=0.69, d=0.1, μ=0.3, ρc=1.8, dim=2, seed=1010)[:tumor] |> DataFrame
 
 lattice, samples = multi_region_sampling(tumor; n = 100, cells_per_sample = 20)
+
+samples, sampletumor = multi_region_sequencing(tumor; n = 100, cells_per_sample = 20, stochastic = true)
 
 mean(size.(samples,1))
 

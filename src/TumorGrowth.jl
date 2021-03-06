@@ -10,6 +10,7 @@ using Statistics
 using StaticArrays
 using StatsBase: fit, Histogram
 using Random
+using Distributions
 using AbstractPlotting: automatic
 using ProgressMeter
 println("Done!")
@@ -24,6 +25,7 @@ println("Done!")
     "time_series.jl"
 ) .|> include
 
+_version = "1.0_sim-rework"
 
 export data_import
 
