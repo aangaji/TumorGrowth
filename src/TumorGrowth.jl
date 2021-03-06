@@ -10,6 +10,7 @@ using Statistics
 using StaticArrays
 using StatsBase: fit, Histogram
 using Random
+using Distributions
 using AbstractPlotting: automatic
 using ProgressMeter
 println("Done!")
@@ -24,10 +25,11 @@ println("Done!")
     "time_series.jl"
 ) .|> include
 
+_version = "1.0_sim-rework"
 
 export data_import
 
-#function to import a saved tumor from a .csv file
+# function to import a saved tumor from a .csv file
 function data_import(path::String; delim="\t")
     data = CSV.File(path, delim=delim) |> DataFrame!
     fields = names(data)

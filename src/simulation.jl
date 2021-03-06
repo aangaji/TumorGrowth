@@ -2,10 +2,13 @@ export birth_death_pushing, birth_death_pushing!, DataFrame
 
 ########---FORMAT---########
 
+#=
+	The simulation uses and returns an array of the mutable Cell type. To obtain a DataFrame with the same fields for analysis or plotting call the overloaded DataFrame function on the array.
+=#
 mutable struct Cell
     index :: Int64
     position :: Vector{Float64}
-    mutations :: SVector{len, Int64} where len
+    mutations :: Vector{Int64}
     parent :: Int64
     b :: Float64
     t_birth :: Float64
@@ -40,7 +43,10 @@ end
 w(r; σ=1.)  = exp(-r^2/(2*σ^2))/√(2π*σ^2)
 
 #=
-	call one of these before running the simulation to set the birth rate profile
+	Call one of the following before running the simulation to set the birth rate profile.
+	Linear is set by default. A custom profile can also be set by overwriting TumorGrowth.b_curve(ρ; bup, ρc).
+
+	A cell's birth rate is updated by computing the local density as a weighted (Gaussian(0, 4.)) sum of distances to a given neighborhood and passing it to the birth rate profile.
 =#
 
 function b_linear()
@@ -60,27 +66,38 @@ end
 #############################
 #######---SIMULATION---######
 
+#=
+	Rejection algorithm for density dependent tumor growth:
+	At each iteration a parent is uniformly chosen and its birth rate updated. It then either devides, dies (removed) or nothing happens. Time is incremented appropriatly.
+	For division the birth! function is called and parent or daughter may or may not gain a new mutation. The pushing! algorithm then removes overlaps.
+
+	Call birth_death_pushing to run a simulation from a single cell
+	returns:	Dict{:tumor, :index, :mutation, :time}
+	arg:		until       loopcondition, if Float final time, if Int final size
+	kwargs:	  	b, d, μ, ρc=Inf, cur_mutation = 0, dim, seed=nothing
+
+	To further evolve a tumor call birth_death_pushing! on existing Cell array and set kwargs cur_id (next cell index), cur_mutation (next mutation), t (time) appropriatly.
+=#
+
 function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, μ, cellbox, t, dimv::Val{dim}) where dim
 
     δ = rand(dim) .- 0.5
     pos = parent.position + 2.1 .* δ/norm(δ)
     push!(cellbox, pos2box(pos, dimv))
 
-    if rand() < μ
-        if rand(Bool)
-        	new = Cell(cur_id, copy(pos), push(parent.mutations, cur_mutation+1), parent.index, parent.b, t, SVector{dim,Float64}(pos))
-		else
-			new = Cell(cur_id, copy(pos), parent.mutations, parent.index, parent.b, t, SVector{dim,Float64}(pos))
-			parent.mutations = push(parent.mutations, cur_mutation+1)
-		end
-        push!(tumor, new)
-        return true
-    else
-        new = Cell(cur_id, copy(pos), parent.mutations, parent.index, parent.b, t, SVector{dim,Float64}(pos))
-        push!(tumor, new)
-        return false
-    end
-    # return Mutation_event(cur_mutation+1, cur_id, t, pos)
+	new = Cell(cur_id, copy(pos), copy(parent.mutations), parent.index, parent.b, t, SVector{dim,Float64}(pos))
+	push!(tumor, new)
+
+	m = 0
+	if rand() < μ/2
+		m += 1
+		push!(parent.mutations, cur_mutation+m)
+	end
+	if rand() < μ/2
+		m += 1
+		push!(new.mutations, cur_mutation+m)
+	end
+	return m
 end
 
 function birth_death_pushing!( tumor::Vector{Cell}, times, Ns, until; b, d, μ, ρc=Inf, cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position), seed=nothing)
@@ -107,9 +124,7 @@ function birth_death_pushing!( tumor::Vector{Cell}, times, Ns, until; b, d, μ, 
         if p < 0.
             cur_id += 1
             N += 1
-            mutation_event = birth!(tumor, parent, cur_id, cur_mutation, μ, cellbox, t, dimv)
-
-            mutation_event && (cur_mutation += 1)
+            cur_mutation += birth!(tumor, parent, cur_id, cur_mutation, μ, cellbox, t, dimv)
 
             pushing!(tumor, N, cellbox, dimv)
 
@@ -136,7 +151,7 @@ loop_condition(N,t, tfinal::Float64) = t < tfinal
 
 function birth_death_pushing( until; b, d, μ, ρc=Inf, cur_mutation = 0, dim , seed=nothing)
     p₀ = zeros(Float64,dim)
-    tumor = [Cell(index=1, position=p₀, parent=0, mutations=SVector{cur_mutation, Int64}(1:cur_mutation...), b=b, t_birth=0.0, p_birth=SVector{dim,Float64}(p₀))]
+    tumor = [Cell(index=1, position=p₀, parent=0, mutations=collect(1:cur_mutation), b=b, t_birth=0.0, p_birth=SVector{dim,Float64}(p₀))]
 
 	times = [0.0]
 	Ns = [1]
