@@ -25,8 +25,6 @@ println("Done!")
     "time_series.jl"
 ) .|> include
 
-_version = "1.0_sim-rework"
-
 export data_import
 
 # function to import a saved tumor from a .csv file
