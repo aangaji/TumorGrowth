@@ -42,7 +42,7 @@ function nonspatial!( tumor::Vector{Cell}, until; b, d, μ, cur_id = 1, cur_muta
             cur_mutation += birth!(tumor, parent, cur_id, cur_mutation, μ, t, dimv)
         elseif p < d
             N -= 1
-            deleteat!.( (tumor, cellbox), row)
+            deleteat!(tumor, row)
         end
         ProgressMeter.update!(prog, N )
     end
