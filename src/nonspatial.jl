@@ -7,16 +7,11 @@ function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, μ, t)
 	new = Cell(cur_id, pos, copy(parent.mutations), parent.index, parent.b, t, SVector{1,Float64}(pos))
 	push!(tumor, new)
 
-	m = 0
-	if rand() < μ/2
-		m += 1
-		push!(parent.mutations, cur_mutation+m)
-	end
-	if rand() < μ/2
-		m += 1
-		push!(new.mutations, cur_mutation+m)
-	end
-	return m
+	m1, m2 = rand(Poisson(μ/2), 2)
+	1:m1 .|> m -> push!(parent.mutations, cur_mutation+m)
+	1:m2 .|> m -> push!(new.mutations, cur_mutation+m1+m)
+
+	return m1+m2
 end
 
 function nonspatial!( tumor::Vector{Cell}, until; b, d, μ, cur_id = 1, cur_mutation = 0, t = 0.0, seed=nothing)
