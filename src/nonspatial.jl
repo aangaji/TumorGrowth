@@ -1,10 +1,10 @@
 export nonspatial, nonspatial!
 
-function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, μ, t, dimv::Val{dim}) where dim
+function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, μ, t)
 
-    pos = zeros(Float64, dim)
+    pos = [0.]
 
-	new = Cell(cur_id, pos, copy(parent.mutations), parent.index, parent.b, t, SVector{dim,Float64}(pos))
+	new = Cell(cur_id, pos, copy(parent.mutations), parent.index, parent.b, t, SVector{1,Float64}(pos))
 	push!(tumor, new)
 
 	m = 0
@@ -19,8 +19,7 @@ function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, μ, t, dimv::
 	return m
 end
 
-function nonspatial!( tumor::Vector{Cell}, until; b, d, μ, cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position), seed=nothing)
-    dimv = Val(dim)
+function nonspatial!( tumor::Vector{Cell}, until; b, d, μ, cur_id = 1, cur_mutation = 0, t = 0.0, seed=nothing)
 
     isnothing(seed) || Random.seed!(seed)
 
@@ -39,7 +38,7 @@ function nonspatial!( tumor::Vector{Cell}, until; b, d, μ, cur_id = 1, cur_muta
         if p < 0.
             cur_id += 1
             N += 1
-            cur_mutation += birth!(tumor, parent, cur_id, cur_mutation, μ, t, dimv)
+            cur_mutation += birth!(tumor, parent, cur_id, cur_mutation, μ, t)
         elseif p < d
             N -= 1
             deleteat!(tumor, row)
@@ -50,11 +49,11 @@ function nonspatial!( tumor::Vector{Cell}, until; b, d, μ, cur_id = 1, cur_muta
 end
 
 
-function nonspatial( until; b, d, μ, cur_mutation = 0, dim , seed=nothing)
-    p₀ = zeros(Float64,dim)
-    tumor = [Cell(index=1, position=p₀, parent=0, mutations=collect(1:cur_mutation), b=b, t_birth=0.0, p_birth=SVector{dim,Float64}(p₀))]
+function nonspatial( until; b, d, μ, cur_mutation = 0, seed=nothing)
+    p₀ = zeros(Float64,1)
+    tumor = [Cell(index=1, position=p₀, parent=0, mutations=collect(1:cur_mutation), b=b, t_birth=0.0, p_birth=SVector{1,Float64}(p₀))]
 
-    output = nonspatial!(tumor, until; b=b, d=d, μ=μ, cur_mutation=cur_mutation, dim=dim, seed=seed)
+    output = nonspatial!(tumor, until; b=b, d=d, μ=μ, cur_mutation=cur_mutation, seed=seed)
 	output[:tumor] = tumor
 
 	return output
