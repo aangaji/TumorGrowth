@@ -15,6 +15,8 @@ using Revise
 @time simoutput = birth_death_pushing(5000; b=0.69, d=0.0, μ=0.1, ρc=Inf, dim=2)#, seed=1010)
 tumor = simoutput[:tumor]
 
+@time simoutput = nonspatial(1000000; b=0.69, d=0.0, μ=0.3, dim=2)
+
 bumor = deepcopy(tumor)
 
 birth_death_pushing!(bumor, length(tumor)+1; b=0.69, d=0.0, μ=0.3, dim=2,
