@@ -22,7 +22,8 @@ println("Done!")
     "pushing_animate.jl",
     "sampling.jl",
     "analysis.jl",
-    "time_series.jl"
+    "time_series.jl",
+    "nonspatial.jl"
 ) .|> include
 
 export data_import
