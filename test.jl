@@ -12,7 +12,7 @@ using Revise
 ####### SIMULATION ######
 #########################
 
-@time simoutput = birth_death_pushing(5000; b=0.69, d=0.0, μ=0.1, ρc=Inf, dim=2)#, seed=1010)
+@time simoutput = birth_death_pushing(10000; b=0.69, d=0.0, μ=10., ρc=Inf, dim=2)#, seed=1010)
 tumor = simoutput[:tumor]
 
 bumor = deepcopy(tumor)
@@ -53,7 +53,6 @@ b = data_import("test_2000_2d.csv")
 b = data_import("test_5000_3d.csv")
 @time plotting(b)
 @time plotting_colored_mutations(b, shading=true, path="test_5000_3d.png")
-
 ########################
 ####### Sampling #######
 ########################
@@ -84,10 +83,9 @@ radial_sample(b; r=20., width=3.) |> data->cross_section(data; x=10., width=6.) 
 ####### Analysis #######
 ########################
 
-tumor = data_import("test_5000_3d.csv")
+# tumordf = data_import("test_5000_3d.csv")
 
-tumor |> mutation_freqs
-tumor |> stochastic_sequencing
+using Plots, StatsBase, Statistics
 
 function M!(fig, f; res=0.0, nBins = 100, lab=:none, color=:auto, normalize=false)
         hist = fit(Histogram, 1 ./ f[res.<f], nbins=nBins, closed=:left)
@@ -98,13 +96,18 @@ function M!(fig, f; res=0.0, nBins = 100, lab=:none, color=:auto, normalize=fals
 end
 M(f; res=0.0, nBins = 100, lab=:none, color=:auto, normalize=false) = M!(plot(), f; res=res, nBins = nBins, lab=lab, color=color, normalize=normalize)
 
-using Plots, StatsBase, Statistics
-M(mutation_freqs(tumor).frequency; res=0.0005)
-b, d, μ=0.69, 0.00, 00.3
-plot!(1:1000, n->μ*b/(b-d)*n )
+tumordf |> mutation_freqs
+tumordf |> stochastic_sequencing
 
-f = filter(m -> m.reads > 1, stochastic_sequencing(tumor, readdepth=1000)).frequency
-M(stochastic_sequencing(tumor, readdepth=2000).frequency; res=0.001)
+fig = M(mutation_freqs(tumordf).frequency; res=0.01)
+b, d, μ=0.69, 0.00, 10.
+plot!(1:100, n->μ*b/(b-d)*n )
+
+M!(fig, stochastic_sequencing(tumordf, readdepth=1000).frequency; res=0.01)
+
+M(stochastic_sequencing(tumordf, readdepth=100).reads; res=1)
+
+histogram(mutation_freqs(tumordf).frequency[findall(isequal(1/500), stochastic_sequencing(tumordf, readdepth=1000).frequency)])
 
 ########################
 ######## clones ########

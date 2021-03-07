@@ -25,7 +25,7 @@ println("Done!")
     "time_series.jl"
 ) .|> include
 
-_version = "1.0_sim-rework"
+_version = "1.1_poissonmuts"
 
 export data_import
 
