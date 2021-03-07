@@ -17,12 +17,12 @@ end
 
 Cell(;index, position, mutations, parent, b, t_birth, p_birth) = Cell(index, position, mutations, parent, b, t_birth, p_birth)
 
-struct Mutation_event
-    mutation :: Int64
-    parent :: Int64
-    t_birth :: Float64
-    p_birth :: Vector{Float64}
-end
+# struct Mutation_event
+#     mutation :: Int64
+#     parent :: Int64
+#     t_birth :: Float64
+#     p_birth :: Vector{Float64}
+# end
 
 function DataFrame(tumor::Vector{T}) where T
     df = DataFrame()

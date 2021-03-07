@@ -22,10 +22,9 @@ println("Done!")
     "pushing_animate.jl",
     "sampling.jl",
     "analysis.jl",
-    "time_series.jl"
+    "time_series.jl",
+    "nonspatial.jl"
 ) .|> include
-
-_version = "1.1_poissonmuts"
 
 export data_import
 
