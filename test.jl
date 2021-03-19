@@ -211,11 +211,6 @@ meshscatter!(0:0.2:360 .|> ϕ-> Point{2}(R .*(cosd(ϕ),sind(ϕ)) .+ cm), markers
 
 # save("multi_region_sampling.png", scene)
 
-lattice, samples = multi_region_sampling(tumor; n = 100, cells_per_sample = 20)
-seq_results = filter!.(c->c.frequency > 0.0, mutation_freqs.(samples))
-
-sampletumor = DataFrame(index = 1:length(samples), position = lattice, mutations = getproperty.(seq_results, :mutation), frequencies = getproperty.(seq_results, :frequency))
-
 density = size(punch(tumor; pos = mean(tumor.position), r = 20.), 1)/(π*20^2)
 scene = plotting_colored_mutations(sampletumor; markersize = sqrt(20/density/π), shading = true)
 plotting_colored_mutations!(scene, tumor)
