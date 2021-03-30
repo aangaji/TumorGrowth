@@ -2,7 +2,10 @@ export mutation_freqs, stochastic_sequencing, multi_region_sequencing, reduced_Î
 
 function mutation_freqs(tumor)
     allmuts = vcat(tumor.mutations...)
-    isempty(allmuts) && return DataFrame(mutation = Int[], frequency = Float64[])
+    isempty(allmuts) && return DataFrame(mutation = Int[],
+                                        reads = Int[],
+                                        coverage = Int[],
+                                        frequency = Float64[])
     muts = allmuts |> unique |> sort!
     bins = vcat(muts, muts[end]+1)
     hist = fit(Histogram, allmuts, bins, closed=:left)
