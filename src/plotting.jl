@@ -24,10 +24,10 @@ function plotting(tumor;
     return scene
 end
 
-function colors_by_mutations(tumor; colorpalette = palette(:tab20), sub = 1)
+function colors_by_mutations(tumor; colorpalette = palette(:tab20), sub = 1, autodepth = false)
     points = [Point(pos...) for pos in tumor.position]
     colors = fill(colorpalette[1], length(points))
-    subclones = clones(tumor; sub=sub, autodepth=false)
+    subclones = clones(tumor; sub=sub, autodepth=autodepth)
     for (i,cl) in enumerate(subclones)
         colors[findall(in(cl.index), tumor.index)] .= colorpalette[(i-1)%length(colorpalette)+1]
     end
@@ -36,11 +36,12 @@ end
 
 function plotting_colored_mutations!(scene, tumor;
         path="", limits = automatic,
-        markersize = 1.0, colorpalette = palette(:tab20), shading = false, sub=1
+        markersize = 1.0, colorpalette = palette(:tab20), shading = false,
+        sub=1, autodepth = false
         )
 
     isempty(tumor) && return
-    points, colors = colors_by_mutations(tumor; colorpalette = colorpalette, sub = sub)
+    points, colors = colors_by_mutations(tumor; colorpalette = colorpalette, sub = sub, autodepth = autodepth)
 
     meshscatter!(scene, points, markersize = markersize, color = colors, scale_plot = false, shading=shading, limits = limits)
 
@@ -49,11 +50,12 @@ end
 
 function plotting_colored_mutations(tumor;
         size=(500,500), limits = automatic, inline=false,
-        markersize = 1.0, colorpalette=palette(:tab20), path="", shading = false, sub=1
+        markersize = 1.0, colorpalette=palette(:tab20), path="", shading = false,
+        sub=1, autodepth = false
         )
     AbstractPlotting.inline!(inline)
     scene = Scene()
     resize!(scene, size)
-    plotting_colored_mutations!(scene, tumor; markersize = markersize, colorpalette = colorpalette, path=path, shading = shading, limits = limits, sub=sub)
+    plotting_colored_mutations!(scene, tumor; markersize = markersize, colorpalette = colorpalette, path=path, shading = shading, limits = limits, sub=sub, autodepth = autodepth)
     return scene
 end

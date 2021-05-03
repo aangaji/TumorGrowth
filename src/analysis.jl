@@ -6,7 +6,7 @@ function mutation_freqs(tumor)
                                         reads = Int[],
                                         coverage = Int[],
                                         frequency = Float64[])
-    muts = allmuts |> unique |> sort!
+    muts = union(allmuts)
     bins = vcat(muts, muts[end]+1)
     hist = fit(Histogram, allmuts, bins, closed=:left)
 
@@ -55,6 +55,26 @@ function reduced_μ!(tumor, x)
 end
 reduced_μ(tumor, x) = reduced_μ!(deepcopy(tumor), x)
 
+function haplotypes(tumor; res=0.0)
+    type_muts = unique(tumor.mutations)
+    filter!(!isempty, type_muts)
+    types = type_muts .|> m-> filter(c-> c.mutations == m , tumor)
+    select = nrow.(types)./nrow(tumor) .>= res
+    return types[select], type_muts[select]
+end
+
+function clones_by_mutations(tumor; res=0.0)
+    isempty(tumor) && return (Vector{typeof(tumor)}(), tumor.mutations)
+    mutations = union(tumor.mutations...)
+
+    types = mutations .|> m -> filter(r -> m in r.mutations, tumor)
+    select = nrow.(types)./nrow(tumor) .>= res
+    return types[select], mutations[select]
+end
+
+############################
+# The following methods are intended for plotting of tumors with mutations
+# sorted in order of occurence
 
 function find_mut(tumor, mut)
     isnothing(mut) && return 1
@@ -66,43 +86,26 @@ end
 
 # clone returns all cells with "mut" as their "sub"th mutation. Cells with less than "sub" mutations are returned for mut=nothing
 
-clone(tumor, mut; sub = find_mut(tumor, mut) ) = filter(r -> isnothing(sub) || length(r.mutations)<sub ? isnothing(mut) : getindex(r.mutations, sub) == mut, tumor )
+function clone(tumor, mut; sub = find_mut(tumor, mut), show_warning = true )
+    show_warning && @warn "This method assumes mutations to be ordered by occurence!"
+    filter(r -> isnothing(sub) || length(r.mutations)<sub ? isnothing(mut) : getindex(r.mutations, sub) == mut, tumor )
+end
+
 
 # clones returns all subclones with unique mutations as "sub"th mutation and one subclone with less than "sub" mutations (clonal or no mutations)
 
-function clones(tumor; sub=1, autodepth=true)
+function clones(tumor; sub=1, autodepth=true, show_warning = true)
 
     out = Vector{DataFrame}()
-    !isnothing(findfirst(length.(tumor.mutations).<sub)) && push!(out, clone(tumor, nothing, sub=sub))
+    !isnothing(findfirst(l-> l<sub, length.(tumor.mutations))) && push!(out, clone(tumor, nothing, sub=sub, show_warning=false))
 
     muts = getindex.(filter(r -> length(r.mutations)>=sub, tumor).mutations, sub) |> unique!
 
+    autodepth && (isempty(out) && length(muts)<2) && return clones(tumor; sub=sub+1)
+    show_warning && @warn "This method assumes mutations to be ordered by occurence!"
+
     for mut in muts
-        push!(out, clone(tumor, mut, sub=sub))
+        push!(out, clone(tumor, mut; sub=sub, show_warning = false))
     end
-
-    autodepth && length(out)==1 && return clones(tumor; sub=sub+1)
     return out
-end
-
-# function haplotypes(tumor; res=0.0)
-#     mutations = filter!(c-> c.frequency > res, mutation_freqs(tumor)).mutation
-#
-#     types = mutations .|> m -> filter(r -> !isempty(r.mutations) && last(r.mutations) == m, tumor)
-#     filter!(t -> !isempty(t), types), getproperty.(first.(types),:mutations)
-# end
-
-function haplotypes(tumor; res=0.0)
-    type_muts = unique(tumor.mutations)
-    filter!(!isempty, type_muts)
-    types = type_muts .|> m-> filter(c-> c.mutations == m , tumor)
-    select = nrow.(types)./nrow(tumor) .>= res
-    types[select], type_muts[select]
-end
-
-function clones_by_mutations(tumor; res=0.0)
-    mutations = filter!(c-> c.frequency > res, mutation_freqs(tumor)).mutation
-
-    types = mutations .|> m -> filter(r -> m in r.mutations, tumor)
-    types, mutations
 end
