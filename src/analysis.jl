@@ -6,7 +6,7 @@ function mutation_freqs(tumor)
                                         reads = Int[],
                                         coverage = Int[],
                                         frequency = Float64[])
-    muts = union(allmuts)
+    muts = sort!(unique(allmuts))
     bins = vcat(muts, muts[end]+1)
     hist = fit(Histogram, allmuts, bins, closed=:left)
 
