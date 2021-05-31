@@ -40,7 +40,7 @@ end
 ############################
 ######---BIRTH RATE---######
 
-w(r; σ=1.)  = exp(-r^2/(2*σ^2))/√(2π*σ^2)
+w(r::Float64; σ=1.)  = exp(-r^2/(2*σ^2))/√(2π*σ^2)
 
 #=
 	Call one of the following before running the simulation to set the birth rate profile.
@@ -50,17 +50,17 @@ w(r; σ=1.)  = exp(-r^2/(2*σ^2))/√(2π*σ^2)
 =#
 
 function b_linear()
-	@eval b_curve(ρ; bup = log(2), ρc) = max(0., bup*(1. - ρ/ρc))
+	@eval b_curve(ρ::Float64; bup = log(2), ρc::Float64) = max(0., bup*(1. - ρ/ρc))
 end
 function b_hill(n=2)
-	@eval b_curve(ρ; bup = log(2), ρc) = bup/(1+exp(ρ-ρc)^($n))
+	@eval b_curve(ρ::Float64; bup = log(2), ρc::Float64) = bup/(1+exp(ρ-ρc)^($n))
 end
 b_linear()
 
-function update_birthrate!(cell::Cell, tumor; bup=log(2), ρc = Inf)
+function update_birthrate!(cell::Cell, tumor; bup::Float64, ρ = Inf)
 	isempty(tumor) && return cell.b = bup
     ws = getfield.(tumor, :position) .|> p -> w(norm(cell.position - p); σ=4.)
-    return cell.b = b_curve(sum(ws); bup = bup, ρc = ρc)
+    return cell.b = b_curve(sum(ws); bup = bup, ρc = ρ)
 end
 
 #############################
@@ -74,7 +74,7 @@ end
 	Call birth_death_pushing to run a simulation from a single cell
 	returns:	Dict{:tumor, :index, :mutation, :time}
 	arg:		until       loopcondition, if Float final time, if Int final size
-	kwargs:	  	b, d, μ, ρc=Inf, cur_mutation = 0, dim, seed=nothing
+	kwargs:	  	b, d, μ, ρ=Inf, cur_mutation = 0, dim, seed=nothing
 
 	To further evolve a tumor call birth_death_pushing! on existing Cell array and set kwargs cur_id (next cell index), cur_mutation (next mutation), t (time) appropriatly.
 =#
@@ -95,24 +95,26 @@ function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, μ, cellbox, 
 	return m1+m2
 end
 
-function birth_death_pushing!( tumor::Vector{Cell}, until; b, d, μ, ρc=Inf, cur_id = 1, cur_mutation = 0, t = 0.0, dim=length(tumor[1].position), seed=nothing)
+function birth_death_pushing!( tumor::Vector{Cell}, until;
+	b, d, μ, ρ=Inf, dim=length(tumor[1].position), seed=abs(rand(Int)),
+	cur_id = 1, cur_mutation = 0, t = 0.0, showprogress=true)
     dimv = Val(dim)
 
-    isnothing(seed) || Random.seed!(seed)
+    Random.seed!(seed)
 
     N = length(tumor)
 
     cellbox = [pos2box(p, dimv) for p in getfield.(tumor,:position)]
 
-    #Juno.progress() do id
-    prog = ProgressUnknown("Progress: Tumor size ")
+    if showprogress prog = ProgressUnknown("Progress: Tumor size ") end
+	prog = ProgressUnknown("Progress: Tumor size ")
     while loop_condition(N,t, until)
 
         N==0 && error("Tumor died")
         row = rand(1:N)
         parent = tumor[row]
 
-        p = rand()*(b+d) - update_birthrate!(parent, view(tumor, find_neighbors(cellbox, row; s=4)); bup=b, ρc = ρc)
+        p = rand()*(b+d) - update_birthrate!(parent, view(tumor, find_neighbors(cellbox, row; s=4)); bup=b, ρ = ρ)
 
         t += randexp()/((d+b)*N)
 
@@ -126,25 +128,23 @@ function birth_death_pushing!( tumor::Vector{Cell}, until; b, d, μ, ρc=Inf, cu
             N -= 1
             deleteat!.( (tumor, cellbox), row)
         end
-        #print("Progress: $(size(tumor,1))/$tumor_size | Recent mutation: $cur_mutation \r")
-        #@info "Tumor size" progress=N/tumor_size _id=id
-        ProgressMeter.update!(prog, N )
+        if showprogress ProgressMeter.update!(prog, N ) end
     end
 	for (i, cell) in enumerate(tumor)
-	    update_birthrate!(cell, view(tumor, find_neighbors(cellbox, i; s=4)); bup=b, ρc = ρc)
+	    update_birthrate!(cell, view(tumor, find_neighbors(cellbox, i; s=4)); bup=b, ρ = ρ)
 	end
     return Dict{Symbol, Any}(:index => cur_id, :mutation => cur_mutation, :time => t)
 end
 
-loop_condition(N,t, Nfinal::Int) = N < Nfinal
-loop_condition(N,t, tfinal::Float64) = t < tfinal
+loop_condition(N::Int,t::Float64, Nfinal::Int) = N < Nfinal
+loop_condition(N::Int,t::Float64, tfinal::Float64) = t < tfinal
 
 
-function birth_death_pushing( until; b, d, μ, ρc=Inf, cur_mutation = 0, dim , seed=nothing)
+function birth_death_pushing( until; b, d, μ, ρ=Inf, cur_mutation = 0, dim , seed=abs(rand(Int)), showprogress=true)
     p₀ = zeros(Float64,dim)
     tumor = [Cell(index=1, position=p₀, parent=0, mutations=collect(1:cur_mutation), b=b, t_birth=0.0, p_birth=SVector{dim,Float64}(p₀))]
 
-    output = birth_death_pushing!(tumor, until; b=b, d=d, μ=μ, ρc=ρc, cur_mutation=cur_mutation, dim=dim, seed=seed)
+    output = birth_death_pushing!(tumor, until; b=b, d=d, μ=μ, ρ=ρ, cur_mutation=cur_mutation, dim=dim, seed=seed, showprogress=showprogress)
 	output[:tumor] = tumor
 
 	return output
