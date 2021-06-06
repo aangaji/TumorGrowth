@@ -5,13 +5,13 @@ import DataFrames: DataFrame, DataFrameRow, nrow
 using CSV
 using Plots: palette, distinguishable_colors
 using Makie
+using GLMakie
 using LinearAlgebra
 using Statistics
 using StaticArrays
 using StatsBase: fit, Histogram
 using Random
 using Distributions
-using AbstractPlotting: automatic
 using ProgressMeter
 println("Done!")
 
