@@ -44,15 +44,14 @@ end
 
 
 function reduced_μ!(tumor, x)
-    tumor |> mutation_freqs |>
-        seq -> filter!(_-> rand()<=x, seq) |>
-        seq_red -> begin
-            for muts in tumor.mutations
-                filter!(m-> m in seq_red.mutation, muts)
-            end
+    reduced = vcat(tumor.mutations...) |> unique! |> sort! |>
+        muts -> filter!(muts) do m
+            rand()<=x
         end
-    tumor
+    filter!.(in(reduced), tumor.mutations)
+    return tumor
 end
+
 reduced_μ(tumor, x) = reduced_μ!(deepcopy(tumor), x)
 
 function haplotypes(tumor; res=0.0)

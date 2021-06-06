@@ -50,10 +50,10 @@ w(r::Float64; σ=1.)  = exp(-r^2/(2*σ^2))/√(2π*σ^2)
 =#
 
 function b_linear()
-	@eval b_curve(ρ::Float64; bup = log(2), ρc::Float64) = max(0., bup*(1. - ρ/ρc))
+	@eval b_curve(ρ::Float64; bup::Float64, ρc::Float64) = max(0., bup*(1. - ρ/ρc))
 end
 function b_hill(n=2)
-	@eval b_curve(ρ::Float64; bup = log(2), ρc::Float64) = bup/(1+exp(ρ-ρc)^($n))
+	@eval b_curve(ρ::Float64; bup::Float64, ρc::Float64) = bup/(1+exp(ρ-ρc)^($n))
 end
 b_linear()
 
