@@ -54,7 +54,44 @@ b = data_import("examples/test_2000_2d.csv")
 
 b = data_import("examples/test_5000_3d.csv")
 @time plotting(b)
-@time plotting_colored_mutations(b, shading=true, path="test_5000_3d.png")
+@time plotting_colored_mutations(b, shading=true, path="examples/test_5000_3d.png", size=(500,500))
+
+# translating and layouts
+
+using Makie, GLMakie
+
+tumor1 = birth_death_pushing(10000; b=1.,d=0., μ=0.2, ρ=7., dim=3)[:tumor] |> DataFrame
+tumor2 = birth_death_pushing(10000; b=1.,d=0., μ=0.2, ρ=Inf, dim=3)[:tumor] |> DataFrame
+tumor3 = birth_death_pushing(3000; b=1.,d=0., μ=0.2, ρ=1.4, dim=2)[:tumor] |> DataFrame
+
+scene = Scene(resolution = (1000, 1000), show_axis=false)
+t1 = plotting_colored_mutations!(scene, tumor1;
+        shading=true, colorpalette=cgrad(:reds)[0.4:0.1:1.] )
+t2 = plotting_colored_mutations!(scene, tumor2;
+        shading=true, colorpalette=cgrad(:blues)[0.4:0.1:1.] )[end]
+t3 = plotting_colored_mutations!(scene, tumor3;
+        shading=false, colorpalette=cgrad(:greens)[0.2:0.1:1.] )[end]
+translate!(t2, Vec3f0(100, 0, 0))
+translate!(t3, Vec3f0(50, 100, 0))
+scene |> display
+
+using GLMakie.MakieLayout
+
+scene, layout = layoutscene(show_axis=false)
+layout[1, 1:2]  = ax1 = LScene(scene, camera = cam2d!, resolution=(500,500))
+layout[2, 1]  = ax2 = LScene(scene, camera = cam3d!, raw = false, show_axis=false, resolution=(500,500))
+layout[2, 2] = ax3 = LScene(scene, camera = cam3d!, raw = false, show_axis=false, resolution=(500,500))
+
+t1 = plotting_colored_mutations!(ax2, tumor1;
+        shading=true, colorpalette=cgrad(:reds)[0.4:0.1:1.] )
+t2 = plotting_colored_mutations!(ax3, tumor2;
+        shading=true, colorpalette=cgrad(:blues)[0.4:0.1:1.] )
+# b = deepcopy(tumor3); b.position ./= 1.8
+t3 = plotting_colored_mutations!(ax1, tumor3; markersize=1.1,
+        shading=false, colorpalette=cgrad(:greens)[0.2:0.1:1.] )
+
+scene |> display
+
 ########################
 ####### Sampling #######
 ########################
@@ -64,7 +101,7 @@ b = data_import("examples/test_2000_2d.csv")
 fig = b |> plotting_colored_mutations
 cross_section(b; x=10., width=3.) |> data -> plotting!(fig, data; color=:black)
 cross_section(b; y=25., width=3.) |> data -> plotting!(fig, data; color=:black)
-radial_sample(b; r=30., width=3.) |> data -> plotting!(fig, data; color=:black, path="test_2000_2d.png")
+radial_sample(b; r=30., width=3.) |> data -> plotting!(fig, data; color=:black, path="examples/test_2000_2d.png")
 
 fig = b |> plotting_colored_mutations
 bulk(b; pos=(25.,0.), box=(20,30)) |> data -> plotting!(fig, data; color=:black)
@@ -73,7 +110,7 @@ punch(b; pos=(-20,-20), r=10) |> data -> plotting!(fig, data; color=:black)
 
 b = data_import("examples/test_5000_3d.csv")
 scene = b |> plotting_colored_mutations
-cross_section(b; x=10., width=3.) |> data -> plotting!(scene, data; color=:black, path="test_5000_3d.png")
+cross_section(b; x=10., width=3.) |> data -> plotting!(scene, data; shading=true, color=:black, path="examples/test_5000_3d.png")
 cross_section(b; y=5., width=3.) |> data -> plotting!(scene, data; color=:black)
 
 display(scene)
@@ -96,14 +133,14 @@ function M!(fig, f; res=0.0, nBins = 100, normalize=false, plotargs...)
         hist = fit(Histogram, 1 ./ f[res.<f], nbins=nBins, closed=:left)
         Mcounts = [ sum(hist.weights[1:n]) for n=1:length(hist.weights)]
         Mcounts = normalize ? Mcounts ./ last(Mcounts) : Mcounts
-        plot!(fig, midpoints(hist.edges[1]), Mcounts; plotargs...)
+        Plots.plot!(fig, midpoints(hist.edges[1]), Mcounts; plotargs...)
 end
-M(f; res=0.0, nBins = 100, normalize=false, plotargs...) = M!(plot(), f; res=res, nBins = nBins, normalize=normalize, plotargs...)
+M(f; res=0.0, nBins = 100, normalize=false, plotargs...) = M!(Plots.plot(), f; res=res, nBins = nBins, normalize=normalize, plotargs...)
 
 fig = M(mutation_freqs(tumor).frequency; res=0.0005, nBins=200,
         xlab="1/f", ylab="M(f)", lab="", marker=:o, ms=1.5)
 β = params.μ * params.b/(params.b-params.d)
-plot!(1:1000, n-> β*n, lab="")
+Plots.plot!(1:1000, n-> β*n, lab="")
 
 f = filter(m -> m.reads > 1, stochastic_sequencing(tumor, readdepth=1000)).frequency
 M!(fig, stochastic_sequencing(tumor, readdepth=2000).frequency; res=0.001, lab="", marker=:d, ms=1.5 )
@@ -114,29 +151,32 @@ M!(fig, stochastic_sequencing(tumor, readdepth=2000).frequency; res=0.001, lab="
 
 tumor = data_import("examples/test_2000_2d.csv")
 
-fig = plotting_colored_mutations(tumor; colorpalette=palette(:tab20), shading=false)
-clone(tumor, nothing) |> t -> plotting!(fig, t, color=:black)
-clone(tumor, 1) |> t -> plotting!(fig, t, color=:black)
+fig = plotting(tumor; color=:lightblue, shading=false)
+clone(tumor, nothing) |> t -> plotting!(fig, t, color=:red)
+clone(tumor, 2) |> t -> plotting!(fig, t, color=:blue)
 
 fig = plotting_colored_mutations(tumor; colorpalette=palette(:tab20), shading=false)
-clones(tumor)[1] |> t -> plotting!(fig, t, color=:black)
+sort(by=size, rev=true, clones(tumor))[1] |> t -> plotting!(fig, t, color=:black)
 
-fig = plotting_colored_mutations(tumor; colorpalette=palette(:tab20), shading=false)
-clones(tumor)[10] |> clones .|> t -> plotting!(fig, t, color=:black)
+fig = plotting(tumor; color=:lightgrey, shading=false)
+sort(by=size, rev=true, clones(tumor))[1] |> clones .|> t -> plotting_colored_mutations!(fig, t; colorpalette=palette(:tab10), shading=false,autodepth=true)
 fig
 
 #########################
 ###### time series ######
 #########################
 
-using DataFrames, Makie
+using DataFrames, Makie, GLMakie
 using Plots: palette, distinguishable_colors
 
-time_series = tumor_stepper(0.0:0.1:40.; b=0.69, d=0.0, μ=0.3, ρ=1.7, dim=2, seed = 1000)
+time_series = tumor_stepper(0.0:0.1:35.; b=0.69, d=0.0, μ=0.3, ρ=7., dim=3)
 
-record_growth(time_series; path="test.gif",
-        frames=1, shading=false,
-        points_colors = t-> colors_by_mutations(t; colorpalette = distinguishable_colors(64))
+out = birth_death_pushing(1000; b=0.69, d=0.0, μ=0.3, ρ=1.7, dim=2)
+time_series = tumor_stepper!(out, 1000:50:4000; b=0.69, d=0.0, μ=0.3, ρ=1.7, seed = 1000)
+
+record_growth(time_series; path="temp.gif",
+        frames=1, shading=true,
+        points_colors = t-> colors_by_mutations(t; colorpalette = palette(:tab20), show_warning=false)
         )
 
 
@@ -150,33 +190,33 @@ TumorGrowth.b_linear()
 TumorGrowth.b_hill(6)
 TumorGrowth.b_curve(1.; bup=1., ρc=1.1)
 
-d, ρ = 0.0, 1.
+d, ρ = 0.2, 1.5
 @time tumor = birth_death_pushing(5000; b=0.69, d=d, μ=0.3, ρ=ρ, dim=2)[:tumor]
 tumordf = tumor |> DataFrame
 
 # power law / surface growth
-plot(log.(tumordf.t_birth), log.(1:length(tumor)), legend=:none )
-plot!(log.(tumordf.t_birth), t -> 2*t, xlims=(0., 4.))
+Plots.plot(log.(tumordf.t_birth), log.(1:length(tumor)), legend=:none )
+Plots.plot!(log.(tumordf.t_birth), t -> 2*t, xlims=(0., 4.))
 
 # exponential / bulk
-plot(tumordf.t_birth, log.(1:5000), legend=:none )
-plot!(tumordf.t_birth, t -> (log(2) - d)*t )
+Plots.plot(tumordf.t_birth, log.(1:5000), legend=:none )
+Plots.plot!(tumordf.t_birth, t -> (log(2) - d)*t )
 
-plot(-7.:0.01:7.,r-> TumorGrowth.w(r; σ=3.), fill=true)
-plot!(-9.:0.01:9.,r-> TumorGrowth.w(r; σ=3.), xticks=-7:2:7, legend=:none)
+Plots.plot(-7.:0.01:7.,r-> TumorGrowth.w(r; σ=3.), fill=true)
+Plots.plot!(-9.:0.01:9.,r-> TumorGrowth.w(r; σ=3.), xticks=-7:2:7, legend=:none)
 
 TumorGrowth.b_linear()
 TumorGrowth.b_hill(6)
-plot(0.:0.01:9., ρ-> TumorGrowth.b_curve(ρ; bup=1., ρc=1.), legend=:none)
-vline!([1.])
+Plots.plot(0.:0.01:9., ρ-> TumorGrowth.b_curve(ρ; bup=1., ρc=1.), legend=:none)
+Plots.vline!([1.])
 
 plotting_colored_mutations(tumordf, colorpalette = palette(:tab20), shading=false, inline=false)
 
-histogram(tumordf.b, alpha=0.3, lw=0.2, lab="b")
-vline!([sum(tumordf.b)/length(tumor)], lab="mean", c=:blue)
-vline!([d], lab="d", c=:black)
+Plots.histogram(tumordf.b, alpha=0.3, lw=0.2, lab="b")
+Plots.vline!([median(tumordf.b)], lab="median", c=:blue)
+Plots.vline!([d], lab="d", c=:black)
 
-plotting(tumordf; color = tumordf.b./maximum(tumordf.b), colormap = cgrad(:reds))
+plotting(tumordf; color = tumordf.b./maximum(tumordf.b), colormap = cgrad(:reds), path="examples/surface_b.png")
 
 
 #############################
@@ -224,13 +264,12 @@ plotting_colored_mutations!(scene, tumor)
 b, d, μ = 0.69, 0.1, 1.0
 @time tumor = birth_death_pushing(5000; b=b, d=d, μ=μ, ρ=Inf, dim=2)[:tumor] |> DataFrame
 
-x = 0.1
+x = 0.3
 tumor_reduced = reduced_μ(tumor, x)
 
-using Plots: plot, plot!
-using StatsBase
+using Plots, StatsBase
 
-fig = tumor |> mutation_freqs |> df -> M(df.frequency; res = 0.001)
-plot!(collect(0:1:1/0.001), finv -> μ*b/(b-d) *(finv - 1), lab=:none)
-tumor_reduced |> mutation_freqs |> df -> M!(fig, df.frequency; res = 0.001)
-plot!(collect(0:1:1/0.001), finv -> μ*x*b/(b-d) *(finv - 1), lab=:none)
+fig = tumor |> mutation_freqs |> df -> M(df.frequency; res = 0.001, lab="")
+Plots.plot!(collect(0:1:1/0.001), finv -> μ*b/(b-d) *(finv - 1), lab="")
+tumor_reduced |> mutation_freqs |> df -> M!(fig, df.frequency; res = 0.001, lab="")
+Plots.plot!(collect(0:1:1/0.001), finv -> μ*x*b/(b-d) *(finv - 1), lab="")
