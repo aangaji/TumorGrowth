@@ -1,10 +1,10 @@
 module TumorGrowth
 
 print("Loading Packages... ")
-import DataFrames: DataFrame, DataFrameRow, nrow
+import DataFrames: DataFrame
+using DataFrames: DataFrameRow, nrow
 using CSV
 using Plots: palette, distinguishable_colors
-using Makie
 using GLMakie
 using LinearAlgebra
 using Statistics

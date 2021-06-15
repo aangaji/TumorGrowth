@@ -58,7 +58,7 @@ b = data_import("examples/test_5000_3d.csv")
 
 # translating and layouts
 
-using Makie, GLMakie
+using GLMakie
 
 tumor1 = birth_death_pushing(10000; b=1.,d=0., μ=0.2, ρ=7., dim=3)[:tumor] |> DataFrame
 tumor2 = birth_death_pushing(10000; b=1.,d=0., μ=0.2, ρ=Inf, dim=3)[:tumor] |> DataFrame
