@@ -1,7 +1,7 @@
 export plotting, plotting!, plotting_colored_mutations, plotting_colored_mutations!, colors_by_mutations
 
 function plotting!(scene, tumor;
-        path="", limits = Makie.automatic,
+        path="", limits = GLMakie.AbstractPlotting.automatic,
         markersize = 1.0, color=nothing, colormap=distinguishable_colors(68), shading = false
         )
 
@@ -16,7 +16,7 @@ end
 function plotting(tumor;
         size=(500,500), show_axis=false, inline=false, plotargs...)
 
-    inline!(inline)
+    GLMakie.AbstractPlotting.inline!(inline)
     scene = Scene(resolution=size, show_axis=show_axis)
     plotting!(scene, tumor; plotargs...)
 end
@@ -32,7 +32,7 @@ function colors_by_mutations(tumor; colorpalette = palette(:tab20), sub = 1, aut
 end
 
 function plotting_colored_mutations!(scene, tumor;
-        path="", limits =  Makie.automatic,
+        path="", limits =  GLMakie.AbstractPlotting.automatic,
         markersize = 1.0, colorpalette = palette(:tab20), shading = false,
         sub=1, autodepth = false, show_warning = true
         )
@@ -48,7 +48,7 @@ end
 
 function plotting_colored_mutations(tumor;
         size=(500,500), show_axis=false, inline=false, plotargs...)
-    inline!(inline)
+    GLMakie.AbstractPlotting.inline!(inline)
     scene = Scene(resolution=size, show_axis=show_axis)
     plotting_colored_mutations!(scene, tumor; plotargs...)
 end

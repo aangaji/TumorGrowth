@@ -33,7 +33,7 @@ struct Square
     width
 end
 
-Base.in(point, c::Makie.Circle) = norm(point .- c.center) < c.r
+Base.in(point, c::Circle) = norm(point .- c.center) < c.r
 
 function triangular_lattice(sq::Square; n=0, a=sqrt(π/n)*radius)
     v, w = [1.0, 0.0], [0.5, -cosd(30)]
@@ -68,7 +68,7 @@ function multi_region_sampling(tumor; n=0, a=0., cells_per_sample=0, sample_r=a/
 
     square = Square(cm .- R.*(1,-1), 2*R)
     lattice = [triangular_lattice(square; n=n, a=a)...]
-    filter!(p -> p in Makie.Circle(Point{2}(cm), R - a/2), lattice)
+    filter!(p -> p in Circle(Point{2}(cm), R - a/2), lattice)
 
     samples = lattice .|> p -> punch(tumor; pos=p, r=sample_r)
 
