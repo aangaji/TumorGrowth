@@ -28,7 +28,12 @@ println("Done!")
 
 export data_import
 
-# function to import a saved tumor from a .csv file
+"""
+    data_import(path::String; delim="\t") :: DataFrame
+
+Convenience function which loads a DataFrame from a '.csv' file and correctly
+parses columns with elementtype 'Vector'.
+"""
 function data_import(path::String; delim="\t")
     data = DataFrame(CSV.File(path; delim=delim); copycols=false)
     arraycols = collect(first(data)) .|> val -> isequal(typeof(val), String) && all(occursin.(("[","]"), val))
