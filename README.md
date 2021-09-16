@@ -1,5 +1,5 @@
 # TumorGrowth
-***A cell-based off-lattice model of spatially constraint tumor growth in 2d and 3d.***
+***A cell-based off-lattice model of spatially constrained tumor growth in 2d and 3d.***
 
 <img src="logo.png" width="350"/>
 
