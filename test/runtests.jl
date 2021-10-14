@@ -13,7 +13,7 @@ using Test, TumorGrowth
         e == ErrorException("Tumor died")
     end
 
-    birth_death_pushing!(simoutput[:tumor], length(simoutput[:tumor])+1; b=0.69, d=0.0, μ=0.3, dim=2,
+    birth_death_pushing!(simoutput[:tumor], simoutput[:mutations], length(simoutput[:tumor])+1; b=0.69, d=0.0, μ=0.3, dim=2,
      t=simoutput[:time], cur_id=simoutput[:index], cur_mutation=simoutput[:mutation])
 
      tumor = simoutput[:tumor] |> DataFrame

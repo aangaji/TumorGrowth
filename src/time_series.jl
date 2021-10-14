@@ -3,12 +3,12 @@ export tumor_stepper, tumor_stepper!, record_growth
 function tumor_stepper!(simresult, trange;
         seed = abs(rand(Int)),simparams...)
     Random.seed!(seed)
-    id, mut_id, t, tumor = simresult |> r -> (r[:index], r[:mutation], r[:time], r[:tumor])
-    # dim = length(first(tumor).position)
+    id, mut_id, t, tumor, mutations = simresult |> r -> (r[:index], r[:mutation], r[:time], r[:tumor], r[:mutations])
+
     time_series = Vector{DataFrame}()
     prog = Progress(length(trange), dt=0.01)
     for tp in trange
-        up = birth_death_pushing!(tumor, tp; simparams..., cur_id=id, cur_mutation=mut_id, t=t, showprogress=false)
+        up = birth_death_pushing!(tumor, mutations, tp; simparams..., cur_id=id, cur_mutation=mut_id, t=t, showprogress=false)
         push!(time_series, deepcopy(DataFrame(tumor)) )
         id, mut_id, t = up[:index], up[:mutation], up[:time]
 
