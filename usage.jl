@@ -17,10 +17,10 @@ using Revise
 ####### SIMULATION ######
 #########################
 
-@time simoutput = birth_death_pushing(3000; b=1., d=0.0, μ=0.1, ρ=Inf, dim=2, seed=1010, showprogress=true)
+@time simoutput = birth_death_pushing(3000; b=1., d=0.0, μ=0.1, ρ=Inf, dim=2, seed=1010, showprogress=false)
 tumor = simoutput[:tumor]
 
-@time simoutput = nonspatial(1000000; b=1., d=0.0, μ=0.3)
+@time simoutput = nonspatial(1000000; b=1., d=0.0, μ=0.3, showprogress=true)
 
 bumor = deepcopy(tumor)
 

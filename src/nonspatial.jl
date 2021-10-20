@@ -21,13 +21,13 @@ function birth!(tumor::Vector{Cell}, mutations::Vector{Mutation}, parent, cur_id
 	return m
 end
 
-function nonspatial!( tumor::Vector{Cell}, mutations::Vector{Mutation}, until; b, d, μ, cur_id = 1, cur_mutation = 0, t = 0.0, seed=nothing)
+function nonspatial!( tumor::Vector{Cell}, mutations::Vector{Mutation}, until; b, d, μ, cur_id = 1, cur_mutation = 0, t = 0.0, seed=nothing, showprogress=true)
 
     isnothing(seed) || Random.seed!(seed)
 
     N = length(tumor)
 
-    prog = ProgressUnknown("Progress: Tumor size ")
+    prog = showprogress ? ProgressUnknown("Progress: Tumor size ") : nothing
     while loop_condition(N,t, until)
 
         N==0 && error("Tumor died")
@@ -45,7 +45,7 @@ function nonspatial!( tumor::Vector{Cell}, mutations::Vector{Mutation}, until; b
             N -= 1
             deleteat!(tumor, row)
         end
-        ProgressMeter.update!(prog, N )
+        showprogress && ProgressMeter.update!(prog, N )
     end
     return Dict{Symbol, Any}(:index => cur_id, :mutation => cur_mutation, :time => t)
 end

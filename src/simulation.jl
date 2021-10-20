@@ -148,8 +148,7 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutations::Vector{Mutation},
 
     cellbox = [pos2box(p, dimv) for p in getfield.(tumor,:position)]
 
-    if showprogress prog = ProgressUnknown("Progress: Tumor size ") end
-	prog = ProgressUnknown("Progress: Tumor size ")
+    prog = showprogress ? ProgressUnknown("Progress: Tumor size ") : nothing
     while loop_condition(N,t, until)
 
         N==0 && error("Tumor died")
@@ -170,7 +169,7 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutations::Vector{Mutation},
             N -= 1
             deleteat!.( (tumor, cellbox), row)
         end
-        if showprogress ProgressMeter.update!(prog, N ) end
+        showprogress && ProgressMeter.update!(prog, N )
     end
 	for (i, cell) in enumerate(tumor)
 	    update_birthrate!(cell, view(tumor, find_neighbors(cellbox, i; s=4)); bup=b, ρ = ρ)
