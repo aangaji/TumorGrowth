@@ -1,20 +1,30 @@
 export mutation_freqs, stochastic_sequencing, multi_region_sequencing, reduced_μ, reduced_μ!, clone, clones, haplotypes, clones_by_mutations
 
 function mutation_freqs(tumor)
-    allmuts = vcat(tumor.mutations...)
-    isempty(allmuts) && return DataFrame(mutation = Int[],
-                                        reads = Int[],
-                                        coverage = Int[],
-                                        frequency = Float64[])
-    muts = sort!(unique(allmuts))
-    bins = vcat(muts, muts[end]+1)
-    hist = fit(Histogram, allmuts, bins, closed=:left)
+    all(isempty.(tumor.mutations)) && return DataFrame(mutation = Int[],
+                                    reads = Int[],
+                                    coverage = Int[],
+                                    frequency = Float64[])
+    vcat(tumor.mutations...) |> countmap |> collect |> sort |> list->
+            DataFrame(
+                    mutation=getindex.(list,1),
+                    reads = getindex.(list, 2),
+                    coverage = fill(nrow(tumor), length(list)),
+                    frequency = getindex.(list, 2) ./ nrow(tumor)
+                    )
+end
 
-    DataFrame(mutation = muts,
-            reads = hist.weights,
-            coverage = fill(nrow(tumor), length(muts)),
-            frequency = hist.weights ./ nrow(tumor)
-            )
+function sampletumor_mfreqs(sampletumor)
+    mutations = vcat(sampletumor.mutations...) |> unique! |> sort!
+    m_ind = Dict(mutations .=> 1:length(mutations))
+    freqs = zeros(length(mutations))
+    for row in eachrow(sampletumor)
+        for (m,f) in zip(row.mutations, row.frequencies)
+            freqs[m_ind[m]] += f
+        end
+    end
+    freqs./=nrow(sampletumor)
+    return DataFrame(mutation = mutations, frequency=freqs)
 end
 
 function stochastic_sequencing(tumor; readdepth = 100)

@@ -9,7 +9,7 @@ using GLMakie
 using LinearAlgebra
 using Statistics
 using StaticArrays
-using StatsBase: fit, Histogram
+using StatsBase: countmap
 using Random
 using Distributions
 using ProgressMeter
