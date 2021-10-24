@@ -1,4 +1,4 @@
-export mutation_freqs, stochastic_sequencing, multi_region_sequencing, reduced_μ, reduced_μ!, clone, clones, haplotypes, clones_by_mutations
+export mutation_freqs, sampletumor_mfreqs, stochastic_sequencing, multi_region_sequencing, reduced_μ, reduced_μ!, clone, clones, haplotypes, clones_by_mutations
 
 function mutation_freqs(tumor)
     all(isempty.(tumor.mutations)) && return DataFrame(mutation = Int[],
