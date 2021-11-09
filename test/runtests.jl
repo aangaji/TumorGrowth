@@ -8,7 +8,7 @@ using Test, TumorGrowth
         haskey(simoutput,key)
     end |> all
     @test try
-        birth_death_pushing(100; b=1., d=1., μ=0.1, ρ=1., dim=2, seed=1010, showprogress=false)
+        birth_death_pushing(100; b=1., d=1., μ=0.5, ρ=1., dim=2, seed=1010, showprogress=false)
     catch e
         e == ErrorException("Tumor died")
     end
@@ -20,6 +20,22 @@ using Test, TumorGrowth
      @test map(eachcol(tumor)) do col
          eltype(eltype(col)) <: Number
      end |> all
+
+     mutations = simoutput[:mutations] |> DataFrame
+     @test while true
+         m = rand(1:length(mutations.origin))
+         ori = mutations.origin[m]
+         if ori in tumor.index
+             cell = findfirst(isequal(ori), tumor.index)
+             loc = findfirst(isequal(m), tumor.mutations[cell])
+
+             return if mutations.ancestor[m] == 0
+                 loc == 1
+             else
+                 mutations.ancestor[m] == tumor.mutations[loc-1]
+             end
+         end
+     end
 
      TumorGrowth.b_linear()
      @test iszero(TumorGrowth.b_curve(1.1; bup=1., ρc=1.))
@@ -64,9 +80,13 @@ end
     rm("temp.csv")
 end
 @testset "Timeseries" begin
-    time_series = tumor_stepper(0.0:0.1:10.; b=0.69, d=0.0, μ=0.3, ρ=6., dim=3)
-    out = birth_death_pushing(1000; b=0.69, d=0.0, μ=0.3, ρ=6., dim=3)
-    time_series = tumor_stepper!(out, 1000:50:2000; b=0.69, d=0.0, μ=0.3, ρ=6., seed = 1000)
+    N, simparams... = (N=1000, b=1., d=0.0, μ=0.3, ρ=6., dim=3, seed=1234)
+    tumor = birth_death_pushing(N; simparams...)[:tumor] |> DataFrame
+
+    time_series = tumor_stepper(range(0., last( tumor.t_birth), length=50); simparams...)
+
+    @test last(time_series) == tumor
+
     record_growth(time_series; path="temp.gif",
             frames=1, shading=true,
             points_colors = t-> colors_by_mutations(t; colorpalette = TumorGrowth.palette(:tab20), show_warning=false)

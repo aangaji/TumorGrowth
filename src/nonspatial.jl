@@ -10,13 +10,13 @@ function birth!(tumor::Vector{Cell}, mutations::Vector{Mutation}, parent, cur_id
 	m = 0
 	if rand() < μ/2
 		m += 1
-		push!(parent.mutations, cur_mutation+m)
 		push!(mutations, Mutation(parent.index, isempty(parent.mutations) ? 0 : last(parent.mutations), t, length(tumor), SVector{0,Float64}()))
+		push!(parent.mutations, cur_mutation+m)
 	end
 	if rand() < μ/2
 		m += 1
+		push!(mutations, Mutation(new.index, isempty(new.mutations) ? 0 : last(new.mutations), t, length(tumor), SVector{0,Float64}()))
 		push!(new.mutations, cur_mutation+m)
-		push!(mutations, Mutation(new.index, isempty(parent.mutations) ? 0 : last(parent.mutations), t, length(tumor), SVector{0,Float64}()))
 	end
 	return m
 end

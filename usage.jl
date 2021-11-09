@@ -19,6 +19,7 @@ using Revise
 
 @time simoutput = birth_death_pushing(3000; b=1., d=0.0, μ=0.1, ρ=Inf, dim=2, seed=1010, showprogress=false)
 tumor = simoutput[:tumor]
+mutations = simoutput[:mutations]
 
 @time simoutput = nonspatial(1000000; b=1., d=0.0, μ=0.3, showprogress=true)
 
@@ -30,7 +31,7 @@ birth_death_pushing!(bumor, length(tumor)+1; b=0.69, d=0.0, μ=0.3, dim=2,
 birth_death_pushing(12.; b=0.69, d=0.0, μ=0.3, dim=3, seed=1010)
 
 tumordf = tumor |> DataFrame
-
+mutationsdf = mutations |> DataFrame
 
 #########################
 ##### TUMOUR SAVING #####
@@ -167,17 +168,20 @@ fig
 ###### time series ######
 #########################
 
-using DataFrames, Makie, GLMakie
+using DataFrames, GLMakie
 using Plots: palette, distinguishable_colors
 
-time_series = tumor_stepper(0.0:0.1:35.; b=0.69, d=0.0, μ=0.3, ρ=7., dim=3)
 
-out = birth_death_pushing(1000; b=0.69, d=0.0, μ=0.3, ρ=1.7, dim=2)
-time_series = tumor_stepper!(out, 1000:50:4000; b=0.69, d=0.0, μ=0.3, ρ=1.7, seed = 1000)
+N, simparams... = (N=5000, b=1., d=0.0, μ=0.3, ρ=6., dim=3, seed=1234)
+tumor = birth_death_pushing(N; simparams...)[:tumor] |> DataFrame
+
+time_series = tumor_stepper(range(0., last( tumor.t_birth), length=50); simparams...)
+
+last(time_series) == tumor
 
 record_growth(time_series; path="temp.gif",
-        frames=1, shading=true,
-        points_colors = t-> colors_by_mutations(t; colorpalette = palette(:tab20), show_warning=false)
+        frames=1, shading=true, show_axis=false,
+        colorpalette = palette(:tab20)
         )
 
 

@@ -107,13 +107,13 @@ function birth!(tumor::Vector{Cell}, mutations::Vector{Mutation}, parent, cur_id
 	m = 0
 	if rand() < μ/2
 		m += 1
+        push!(mutations, Mutation(parent.index, isempty(parent.mutations) ? 0 : last(parent.mutations), t, length(tumor), SVector{dim,Float64}(parent.position)))
 		push!(parent.mutations, cur_mutation+m)
-		push!(mutations, Mutation(parent.index, isempty(parent.mutations) ? 0 : last(parent.mutations), t, length(tumor), SVector{dim,Float64}(parent.position)))
 	end
 	if rand() < μ/2
 		m += 1
+		push!(mutations, Mutation(new.index, isempty(new.mutations) ? 0 : last(new.mutations), t, length(tumor), SVector{dim,Float64}(pos)))
 		push!(new.mutations, cur_mutation+m)
-		push!(mutations, Mutation(new.index, isempty(parent.mutations) ? 0 : last(parent.mutations), t, length(tumor), SVector{dim,Float64}(pos)))
 	end
 	return m
 end
@@ -138,11 +138,11 @@ kwargs:     `b, d, μ, ρ=Inf, cur_mutation = 0, dim, seed=nothing`
 To further evolve a tumor call `birth_death_pushing!` on existing `Cell` array and set kwargs `cur_id` (next cell index), `cur_mutation` (next mutation), `t` (time) appropriatly.
 """
 function birth_death_pushing!( tumor::Vector{Cell}, mutations::Vector{Mutation}, until;
-	b, d, μ, ρ=Inf, dim=length(tumor[1].position), seed=abs(rand(Int)),
+	b, d, μ, ρ=Inf, dim=length(tumor[1].position), seed=nothing,
 	cur_id = 1, cur_mutation = 0, t = 0.0, showprogress=true)
     dimv = Val(dim)
 
-    Random.seed!(seed)
+    isnothing(seed) || Random.seed!(seed)
 
     N = length(tumor)
 
