@@ -36,7 +36,8 @@ parses columns with elementtype 'Vector'.
 """
 function data_import(path::String; delim="\t")
     data = DataFrame(CSV.File(path; delim=delim); copycols=false)
-    arraycols = collect(first(data)) .|> val -> isequal(typeof(val), String) && all(occursin.(("[","]"), val))
+    arraycols = collect(first(data)) .|> val ->
+        (val isa String || val isa InlineString) && all(occursin.(("[","]"), val))
     data[!,arraycols] .= data[!,arraycols] .|> Meta.parse .|> eval
     for col in findall(.!(arraycols))
             data[!, col] .= data[!, col] |> Vector

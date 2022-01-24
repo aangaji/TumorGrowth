@@ -22,26 +22,28 @@ using Test, TumorGrowth
      end |> all
 
      mutations = simoutput[:mutations] |> DataFrame
-     @test while true
-         m = rand(1:length(mutations.origin))
-         ori = mutations.origin[m]
-         if ori in tumor.index
-             cell = findfirst(isequal(ori), tumor.index)
-             loc = findfirst(isequal(m), tumor.mutations[cell])
+     function lambda()
+         while true
+             m = rand(1:length(mutations.origin))
+             ori = mutations.origin[m]
+             if ori in tumor.index
+                 cell = findfirst(isequal(ori), tumor.index)
+                 loc = findfirst(isequal(m), tumor.mutations[cell])
 
-             return if mutations.ancestor[m] == 0
-                 loc == 1
-             else
-                 mutations.ancestor[m] == tumor.mutations[loc-1]
+                 return if mutations.ancestor[m] == 0
+                     loc == 1
+                 else
+                     mutations.ancestor[m] == tumor.mutations[loc-1]
+                 end
              end
          end
      end
+     @test lambda()
 
      TumorGrowth.b_linear()
      @test iszero(TumorGrowth.b_curve(1.1; bup=1., ρc=1.))
      TumorGrowth.b_hill(6)
      @test !iszero(TumorGrowth.b_curve(1.1; bup=1., ρc=1.))
-
      reduced_μ!(tumor, 1/2)
 
      tumor = birth_death_pushing(2000; b=1., d=0.0, μ=0.3, ρ=6., dim=3, seed=1234)[:tumor]
@@ -55,6 +57,7 @@ end
     sc = plotting(tumor, shading=false, inline=false, size=(500,500))
     plotting_colored_mutations!(sc, tumor, colorpalette = TumorGrowth.palette(:tab20), show_warning = true, shading=false, path = "temp.png")
     @test sc isa TumorGrowth.Scene
+    display(sc)
     rm("temp.png")
 end
 
@@ -79,6 +82,7 @@ end
     @test samples isa Vector{DataFrame} && sampletumor isa DataFrame
     rm("temp.csv")
 end
+
 @testset "Timeseries" begin
     N, simparams... = (N=1000, b=1., d=0.0, μ=0.3, ρ=6., dim=3, seed=1234)
     tumor = birth_death_pushing(N; simparams...)[:tumor] |> DataFrame
