@@ -5,7 +5,7 @@ import DataFrames: DataFrame
 using DataFrames: DataFrameRow, nrow
 using CSV
 using Plots: palette, distinguishable_colors
-using GLMakie
+using GLMakie, Makie
 using LinearAlgebra
 using Statistics
 using StaticArrays

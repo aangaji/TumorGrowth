@@ -3,7 +3,7 @@ This file demonstrates most functionality of the package.
 Load Revise if you want to make changes to the source files.
 """
 
-using Pkg; Pkg.activate(pwd()); Pkg.instantiate()
+using Pkg; Pkg.activate(pwd())
 using Revise
 
 @time using TumorGrowth
@@ -92,6 +92,15 @@ t3 = plotting_colored_mutations!(ax1, tumor3; markersize=1.1,
         shading=false, colorpalette=cgrad(:greens)[0.2:0.1:1.] )
 
 scene |> display
+
+# plotting sampletumors
+
+@time tumor = birth_death_pushing(3000; b=1., d=0.0, μ=0.5, ρ=1.6, dim=2, showprogress=false)[:tumor] |> DataFrame
+samples, sampletumor = multi_region_sequencing(tumor, n=50)
+
+plotting_colored_mutations(sampletumor; markersize=sampletumor.sample_r, show_axis=true)
+plotting_sampletumor_pies(sampletumor, first=30, colorpalette = TumorGrowth.distinguishable_colors(30))
+plotting_sampletumor_pies(sampletumor, mutations = [1,10,55])
 
 ########################
 ####### Sampling #######

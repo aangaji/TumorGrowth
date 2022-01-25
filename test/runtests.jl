@@ -51,16 +51,6 @@ using Test, TumorGrowth
      data_import("temp.csv", delim=",")
 end
 
-@testset "Plotting" begin
-    tumor = data_import("temp.csv", delim=",")
-
-    sc = plotting(tumor, shading=false, inline=false, size=(500,500))
-    plotting_colored_mutations!(sc, tumor, colorpalette = TumorGrowth.palette(:tab20), show_warning = true, shading=false, path = "temp.png")
-    @test sc isa TumorGrowth.Scene
-    display(sc)
-    rm("temp.png")
-end
-
 @testset "Sampling" begin
     tumor = data_import("temp.csv", delim=",")
     @test isa.( [
@@ -75,12 +65,27 @@ end
         ], DataFrame) |> all
 
     plane = cross_section(tumor; x=0., width=3., reduce_dim=true)
-    lattice, samples = multi_region_sampling(plane; n = 20, cells_per_sample = 20)
+    lattice, samples, sample_r = multi_region_sampling(plane; n = 20, cells_per_sample = 20)
     @test lattice isa Vector{Vector{Float64}} &&
         samples isa Vector{DataFrame}
     samples, sampletumor = multi_region_sequencing(plane; n = 20, cells_per_sample = 20, stochastic = true)
     @test samples isa Vector{DataFrame} && sampletumor isa DataFrame
-    rm("temp.csv")
+end
+
+@testset "Plotting" begin
+    tumor = data_import("temp.csv", delim=",")
+
+    sc = plotting(tumor, shading=false, inline=false, size=(500,500))
+    plotting_colored_mutations!(sc, tumor, colorpalette = TumorGrowth.palette(:tab20), show_warning = true, shading=false, path = "temp.png")
+
+    plane = cross_section(tumor; x=0., width=3., reduce_dim=true)
+    samples, sampletumor = multi_region_sequencing(plane; n = 20)
+    plotting_colored_mutations(sampletumor; markersize=sampletumor.sample_r, show_axis=true)
+    plotting_sampletumor_pies(sampletumor, first=10, colorpalette = TumorGrowth.palette(:tab10))
+    plotting_sampletumor_pies(sampletumor, mutations = [1,10,55])
+
+    @test sc isa TumorGrowth.Scene
+    display(sc)
 end
 
 @testset "Timeseries" begin
@@ -95,5 +100,7 @@ end
             frames=1, shading=true,
             points_colors = t-> colors_by_mutations(t; colorpalette = TumorGrowth.palette(:tab20), show_warning=false)
             )
-    rm("temp.gif")
 end
+rm("temp.png")
+rm("temp.csv")
+rm("temp.gif")

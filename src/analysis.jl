@@ -37,11 +37,12 @@ end
 
 
 function multi_region_sequencing(tumor; n=0, a=0., cells_per_sample=0, sample_r=a/2, res=0.0, stochastic = false, readdepth = 100)
-    lattice, samples = multi_region_sampling(tumor; n=n, a=a, cells_per_sample=cells_per_sample, sample_r=sample_r)
+    lattice, samples, sample_r = multi_region_sampling(tumor; n=n, a=a, cells_per_sample=cells_per_sample, sample_r=sample_r)
     seq_results = filter!.(c->c.frequency > res, stochastic ? stochastic_sequencing.(samples; readdepth=readdepth) : mutation_freqs.(samples))
     sampletumor = DataFrame(
         index = 1:length(samples),
         n = nrow.(samples),
+        sample_r = fill(sample_r, length(samples)),
         position = lattice,
         mutations = getproperty.(seq_results, :mutation),
         frequencies = getproperty.(seq_results, :frequency),
@@ -49,7 +50,7 @@ function multi_region_sequencing(tumor; n=0, a=0., cells_per_sample=0, sample_r=
         coverages = getproperty.(seq_results, :coverage)
         )
 
-    return samples, sampletumor
+    return (samples=samples, sampletumor=sampletumor)
 end
 
 

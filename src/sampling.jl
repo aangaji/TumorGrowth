@@ -72,5 +72,5 @@ function multi_region_sampling(tumor; n=0, a=0., cells_per_sample=0, sample_r=a/
 
     samples = lattice .|> p -> punch(tumor; pos=p, r=sample_r)
 
-    return lattice, samples
+    return (lattice=lattice, samples=samples, sample_r=sample_r)
 end
