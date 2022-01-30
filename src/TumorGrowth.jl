@@ -38,7 +38,9 @@ function data_import(path::String; delim="\t")
     data = DataFrame(CSV.File(path; delim=delim); copycols=false)
     arraycols = collect(first(data)) .|> val ->
         (val isa String || val isa InlineString) && all(occursin.(("[","]"), val))
-    data[!,arraycols] .= data[!,arraycols] .|> Meta.parse .|> eval
+    if any(arraycols)
+        data[!,arraycols] .= data[!,arraycols] .|> Meta.parse .|> eval
+    end
     for col in findall(.!(arraycols))
             data[!, col] .= data[!, col] |> Vector
     end
