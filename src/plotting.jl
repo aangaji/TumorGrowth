@@ -9,7 +9,7 @@ function plotting!(scene, tumor;
     isempty(tumor) && return
     p = (tumor isa DataFrameRow) ? [Point(tumor.position...)] : [Point(pos...) for pos in tumor.position]
 
-    isnothing(color) && (color = [isempty(mut) ? 1 : mod(mut[end], length(colormap))+1 for mut in tumor.mutations])
+    color = isnothing(color) ? [isempty(mut) ? 1 : mod(mut[end], length(colormap))+1 for mut in tumor.mutations] : color
     meshscatter!(scene, p ; markersize = markersize, color = color, colormap=colormap, scale_plot = false, plotargs...)
     isempty(path) || save(path, scene)
     return scene
@@ -35,14 +35,13 @@ end
 function plotting_colored_mutations!(scene, tumor;
         path="", limits =  Makie.automatic,
         markersize = 1.0, colorpalette = palette(:tab20), shading = false,
-        sub=1, autodepth = false, show_warning = true,
-        overdraw=false
+        sub=1, autodepth = false, show_warning = true, alpha = 1., plotargs...
         )
 
     isempty(tumor) && return
     points, colors = colors_by_mutations(tumor; colorpalette = colorpalette, sub = sub, autodepth = autodepth, show_warning = show_warning)
 
-    newscene = meshscatter!(scene, points, markersize = markersize, color = colors, scale_plot = false, shading=shading, limits = limits, overdraw = overdraw)
+    newscene = meshscatter!(scene, points, markersize = markersize, color = [(c,alpha) for c in colors], scale_plot = false, shading=shading, limits = limits, plotargs...)
 
     isempty(path) || save(path, scene)
     return scene
