@@ -9,10 +9,17 @@ function plotting!(scene, tumor;
     isempty(tumor) && return
     p = (tumor isa DataFrameRow) ? [Point(tumor.position...)] : [Point(pos...) for pos in tumor.position]
 
-    color = isnothing(color) ? [isempty(mut) ? 1 : mod(mut[end], length(colormap))+1 for mut in tumor.mutations] : [color]
-    colors = [(c isa Number ? colormap[c] : c, alpha) for c in color]
+    colors = if isnothing(color)
+        [isempty(mut) ? 1 : mod(mut[end], length(colormap)) + 1 for mut in tumor.mutations]
+    elseif !(color isa Vector)
+        (color isa Number ? colormap[color] : color, alpha)
+    elseif length(color) == nrow(tumor)
+        [(c isa Number ? colormap[c] : c, alpha) for c in color]
+    else
+        error("Options for color: nothing, single value or value for every cell.")
+    end
     
-    meshscatter!(scene, p; markersize = markersize, color = isone(length(colors)) ? colors[1] : colors)
+    meshscatter!(scene, p; markersize = markersize, color = colors)
     isempty(path) || save(path, scene)
     return scene
 end
