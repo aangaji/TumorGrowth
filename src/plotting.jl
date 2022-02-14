@@ -2,15 +2,17 @@ export plotting, plotting!, plotting_colored_mutations, plotting_colored_mutatio
 export plotting_sampletumor_pies!, plotting_sampletumor_pies
 
 function plotting!(scene, tumor;
-        path="", markersize = 1.0, color=nothing, colormap=distinguishable_colors(68),
+        path="", markersize = 1.0, color=nothing, colormap=distinguishable_colors(68), alpha = 1.,
         plotargs...
         )
 
     isempty(tumor) && return
     p = (tumor isa DataFrameRow) ? [Point(tumor.position...)] : [Point(pos...) for pos in tumor.position]
 
-    color = isnothing(color) ? [isempty(mut) ? 1 : mod(mut[end], length(colormap))+1 for mut in tumor.mutations] : color
-    meshscatter!(scene, p ; markersize = markersize, color = color, colormap=colormap, scale_plot = false, plotargs...)
+    color = isnothing(color) ? [isempty(mut) ? 1 : mod(mut[end], length(colormap))+1 for mut in tumor.mutations] : [color]
+    colors = [(c isa Number ? colormap[c] : c, alpha) for c in color]
+    
+    meshscatter!(scene, p; markersize = markersize, color = isone(length(colors)) ? colors[1] : colors)
     isempty(path) || save(path, scene)
     return scene
 end
