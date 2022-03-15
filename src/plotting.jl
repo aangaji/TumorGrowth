@@ -19,7 +19,7 @@ function plotting!(scene, tumor;
         error("Options for color: nothing, single value or value for every cell.")
     end
     
-    meshscatter!(scene, p; markersize = markersize, color = colors)
+    meshscatter!(scene, p; markersize = markersize, color = colors, plotargs...)
     isempty(path) || save(path, scene)
     return scene
 end
@@ -65,40 +65,42 @@ end
 
 function plotting_sampletumor_pies!(scene, sampletumor;
         path="", colorpalette = palette(:tab20), overdraw=false,
-        strokecolor=nothing, strokewidth = 1, sample_r = 0.,
-        mutations = nothing, first = isnothing(mutations) ? 10 : length(mutations)
+        strokecolor=nothing, strokewidth = 1, sample_r = 0., wt_color = :lightgrey,
+        mutations = nothing, first = isnothing(mutations) ? 10 : length(mutations),
+        plotargs...
         )
 
-        top_muts = isnothing(mutations) ? sort( sampletumor_mfreqs(sampletumor), :frequency, rev=true).mutation[1:first,:] : mutations
-        m_colors = Dict( top_muts .=> colorpalette[1:first])
+    top_muts = isnothing(mutations) ? sort( sampletumor_mfreqs(sampletumor), :frequency, rev=true).mutation[1:first,:] : mutations
+    m_colors = Dict( top_muts .=> colorpalette[1:first])
 
-        for s in eachrow(sampletumor)
-                mask = map( m-> m in top_muts, s.mutations)
-                center, freqs, colors = s.position, s.frequencies[mask], [m_colors[m] for m in s.mutations[mask]]
-                if isempty(freqs)
-                        freqs, colors = [1.],[:lightgrey]
-                end
-                freqs ./= sum(freqs)
-                startphis = cumsum(freqs).-freqs
-                sections = map(zip(startphis,freqs)) do (fs,f)
-                        r = iszero(sample_r) ? s.sample_r : sample_r
-                        circ = Point2f0[ center .+ r .* (cos(2π*p), sin(2π*p)) for p in (0.:0.002:f).+fs]
-                        !isone(length(freqs)) && push!(circ,Point2f0(center))
-                        circ
-                end
-                for (sec,c) in zip(sections,colors)
-                        poly!(scene, sec , color = c, strokewidth = strokewidth,
-                        strokecolor = isnothing(strokecolor) ? c : strokecolor
-                         )
-                end
-        end
-        isempty(path) || save(path, scene)
-        return scene
+    for s in eachrow(sampletumor)
+            mask = map( m-> m in top_muts, s.mutations)
+            center, freqs, colors = s.position, s.frequencies[mask], [m_colors[m] for m in s.mutations[mask]]
+            if isempty(freqs)
+                    freqs, colors = [1.],[wt_color]
+            end
+            freqs ./= sum(freqs)
+            startphis = cumsum(freqs).-freqs
+            sections = map(zip(startphis,freqs)) do (fs,f)
+                    r = iszero(sample_r) ? s.sample_r : sample_r
+                    circ = Point2f0[ center .+ r .* (cos(2π*p), sin(2π*p)) for p in (0.:0.002:f).+fs]
+                    !isone(length(freqs)) && push!(circ,Point2f0(center))
+                    circ
+            end
+            for (sec, c) in zip(sections, colors)
+                poly!(scene, sec, color = c, strokewidth = strokewidth,
+                    strokecolor = isnothing(strokecolor) ? c : strokecolor, overdraw = overdraw,
+                    plotargs...
+                )
+            end
+    end
+    isempty(path) || save(path, scene)
+    return scene
 end
 
 function plotting_sampletumor_pies(sampletumor;
         size=(500,500), show_axis=false, inline=false, plotargs...)
-        Makie.inline!(inline)
-        scene = Scene(resolution=size, show_axis=show_axis)
-        plotting_sampletumor_pies!(scene, sampletumor; plotargs...)
+    Makie.inline!(inline)
+    scene = Scene(resolution=size, show_axis=show_axis)
+    plotting_sampletumor_pies!(scene, sampletumor; plotargs...)
 end
