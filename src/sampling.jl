@@ -18,7 +18,7 @@ end
 # this function returns a copy without entries at dimension d
 function reduce_dimension(position, d)
     dim = position |> length
-    select = mod.((d-1:2:d+1) .- 1, dim) .+ 1 |> unique
+    select = mod.((d-1:2:d+1) .- 1, dim) .+ 1 |> unique |> sort!
     return getindex(position, select)
 end
 
