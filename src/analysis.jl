@@ -27,16 +27,16 @@ function sampletumor_mfreqs(sampletumor)
     return DataFrame(mutation = mutations, frequency=freqs)
 end
 
-function stochastic_sequencing(tumor; readdepth = 100)
+function stochastic_sequencing(tumor; readdepth)
     seq_results = mutation_freqs(tumor)
-    seq_results.reads = [ rand( Poisson(readdepth*f) ) for f = seq_results.frequency ]
+    seq_results.reads = [ rand( Binomial(readdepth,f) ) for f = seq_results.frequency ]
     seq_results.coverage = fill(readdepth, nrow(seq_results))
     seq_results.frequency = seq_results.reads ./ seq_results.coverage
     seq_results
 end
 
 
-function multi_region_sequencing(tumor; n=0, a=0., cells_per_sample=0, sample_r=a/2, res=0.0, stochastic = false, readdepth = 100)
+function multi_region_sequencing(tumor; n=0, a=0., cells_per_sample=0, sample_r=a/2, res=0.0, stochastic = false, readdepth)
     lattice, samples, sample_r = multi_region_sampling(tumor; n=n, a=a, cells_per_sample=cells_per_sample, sample_r=sample_r)
     seq_results = filter!.(c->c.frequency > res, stochastic ? stochastic_sequencing.(samples; readdepth=readdepth) : mutation_freqs.(samples))
     sampletumor = DataFrame(

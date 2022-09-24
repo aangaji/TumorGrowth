@@ -58,7 +58,7 @@ function multi_region_sampling(tumor; n = 0, a = 0.0, cells_per_sample = 0, samp
 
     sample_r = iszero(cells_per_sample) ? a / 2 : sqrt(cells_per_sample / (π * density))
     if !iszero(n)
-        a = sqrt(π / n) * R
+        a = sqrt(π / n / sind(60)) * R
         sample_r = iszero(sample_r) ? a / 2 : sample_r
     elseif iszero(a)
         a = 2 * sample_r
