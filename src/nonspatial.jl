@@ -1,10 +1,10 @@
 export nonspatial, nonspatial!
 
-function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, μ, t)
+function birth!(tumor::Vector{Cell}, mutations::Vector{Mutation}, parent, cur_id, cur_mutation, μ, t)
 
-    pos = [0.]
+    pos = Float64[]
 
-	new = Cell(cur_id, pos, copy(parent.mutations), parent.index, parent.b, t, SVector{1,Float64}(pos))
+	new = Cell(cur_id, pos, copy(parent.mutations), parent.index, parent.b, t, SVector{0,Float64}())
 	push!(tumor, new)
 
 	m1, m2 = rand(Poisson(μ/2), 2)
@@ -14,13 +14,13 @@ function birth!(tumor::Vector{Cell}, parent, cur_id, cur_mutation, μ, t)
 	return m1+m2
 end
 
-function nonspatial!( tumor::Vector{Cell}, until; b, d, μ, cur_id = 1, cur_mutation = 0, t = 0.0, seed=nothing)
+function nonspatial!( tumor::Vector{Cell}, mutations::Vector{Mutation}, until; b, d, μ, cur_id = 1, cur_mutation = 0, t = 0.0, seed=nothing, showprogress=true)
 
     isnothing(seed) || Random.seed!(seed)
 
     N = length(tumor)
 
-    prog = ProgressUnknown("Progress: Tumor size ")
+    prog = showprogress ? ProgressUnknown("Progress: Tumor size ") : nothing
     while loop_condition(N,t, until)
 
         N==0 && error("Tumor died")
@@ -33,23 +33,27 @@ function nonspatial!( tumor::Vector{Cell}, until; b, d, μ, cur_id = 1, cur_muta
         if p < 0.
             cur_id += 1
             N += 1
-            cur_mutation += birth!(tumor, parent, cur_id, cur_mutation, μ, t)
+            cur_mutation += birth!(tumor, mutations, parent, cur_id, cur_mutation, μ, t)
         elseif p < d
             N -= 1
             deleteat!(tumor, row)
         end
-        ProgressMeter.update!(prog, N )
+        showprogress && ProgressMeter.update!(prog, N )
     end
     return Dict{Symbol, Any}(:index => cur_id, :mutation => cur_mutation, :time => t)
 end
+nonspatial!( until; tumor::Vector{Cell}, mutations::Vector{Mutation}, simparams...) =  nonspatial!( tumor, mutations, until; simparams...)
 
 
-function nonspatial( until; b, d, μ, cur_mutation = 0, seed=nothing)
-    p₀ = zeros(Float64,1)
-    tumor = [Cell(index=1, position=p₀, parent=0, mutations=collect(1:cur_mutation), b=b, t_birth=0.0, p_birth=SVector{1,Float64}(p₀))]
+function nonspatial( until; cur_mutation = 0, b, simparams...)
+    p₀ = Float64[]
+    tumor = [Cell(index=1, position=p₀, parent=0, mutations=collect(1:cur_mutation), b=b, t_birth=0.0, p_birth=SVector{0,Float64}(p₀))]
 
-    output = nonspatial!(tumor, until; b=b, d=d, μ=μ, cur_mutation=cur_mutation, seed=seed)
+	mutations = [Mutation(; origin=1, ancestor=0, t_birth=0., N_birth=1, p_birth=SVector{0,Float64}(p₀)) for m=1:cur_mutation]
+
+    output = nonspatial!(tumor, mutations, until; cur_mutation=cur_mutation, b=b, simparams...)
 	output[:tumor] = tumor
+	output[:mutations] = mutations
 
 	return output
 end

@@ -19,7 +19,7 @@ function rerun(until; params...)
 end
 
 @benchmark rerun(2000; b=0.69, d=0.1, μ=0.3, ρ=1., dim=2)
-
+"""
 BenchmarkTools.Trial:
   memory estimate:  632.83 MiB
   allocs estimate:  4827004
@@ -31,9 +31,10 @@ BenchmarkTools.Trial:
   --------------
   samples:          194
   evals/sample:     1
+"""
 
 @benchmark rerun(2000; b=0.69, d=0.1, μ=0.3, ρ=20., dim=2)
-
+"""
 BenchmarkTools.Trial:
   memory estimate:  1.72 GiB
   allocs estimate:  4531734
@@ -45,9 +46,10 @@ BenchmarkTools.Trial:
   --------------
   samples:          135
   evals/sample:     1
+"""
 
 @benchmark rerun(5000; b=0.69, d=0.1, μ=0.3, ρ=7., dim=3)
-
+"""
 BenchmarkTools.Trial:
   memory estimate:  1.39 GiB
   allocs estimate:  16098472
@@ -59,9 +61,10 @@ BenchmarkTools.Trial:
   --------------
   samples:          87
   evals/sample:     1
+"""
 
 @benchmark rerun(5000; b=0.69, d=0.1, μ=0.3, ρ=30., dim=3)
-
+"""
 BenchmarkTools.Trial:
   memory estimate:  2.11 GiB
   allocs estimate:  13781166
@@ -73,7 +76,7 @@ BenchmarkTools.Trial:
   --------------
   samples:          53
   evals/sample:     1
-
+"""
 
 
 using SharedArrays, Distributed
