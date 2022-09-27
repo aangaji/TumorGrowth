@@ -8,8 +8,24 @@ function birth!(tumor::Vector{Cell}, mutations::Vector{Mutation}, parent, cur_id
 	push!(tumor, new)
 
 	m1, m2 = rand(Poisson(μ/2), 2)
-	1:m1 .|> m -> push!(parent.mutations, cur_mutation+m)
-	1:m2 .|> m -> push!(new.mutations, cur_mutation+m1+m)
+    ancestor_1 = isempty(parent.mutations) ? 0 : last(parent.mutations)
+    ancestor_2 = isempty(new.mutations) ? 0 : last(new.mutations)
+    for m in 1:m1
+        push!(mutations, 
+            Mutation(parent.index, ancestor_1,
+                t, length(tumor), SVector{dim,Float64}(parent.position)
+                )  
+            )
+        push!(parent.mutations, cur_mutation+m)
+    end
+    for m in 1:m2
+        push!(mutations, 
+            Mutation(new.index, ancestor_2,
+                t, length(tumor), SVector{dim,Float64}(pos)
+                )
+            )
+        push!(new.mutations, cur_mutation+m1+m)
+    end
 
 	return m1+m2
 end

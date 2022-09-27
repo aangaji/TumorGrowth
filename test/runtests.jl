@@ -21,25 +21,6 @@ using Test, TumorGrowth
          eltype(eltype(col)) <: Number
      end |> all
 
-     mutations = simoutput[:mutations] |> DataFrame
-     function lambda()
-         while true
-             m = rand(1:length(mutations.origin))
-             ori = mutations.origin[m]
-             if ori in tumor.index
-                 cell = findfirst(isequal(ori), tumor.index)
-                 loc = findfirst(isequal(m), tumor.mutations[cell])
-
-                 return if mutations.ancestor[m] == 0
-                     loc == 1
-                 else
-                     mutations.ancestor[m] == tumor.mutations[loc-1]
-                 end
-             end
-         end
-     end
-     @test lambda()
-
      TumorGrowth.b_linear()
      @test iszero(TumorGrowth.b_curve(1.1; bup=1., ρc=1.))
      TumorGrowth.b_hill(6)
@@ -60,15 +41,16 @@ end
         punch(tumor; pos=(-10,-10,0), r=5)
         ], DataFrame) |> all
     @test isa.([
-        tumor |> mutation_freqs,
-        tumor |> stochastic_sequencing
+        mutation_freqs(tumor),
+        stochastic_sequencing(tumor; readdepth=10)
         ], DataFrame) |> all
 
     plane = cross_section(tumor; x=0., width=3., reduce_dim=true)
     lattice, samples, sample_r = multi_region_sampling(plane; n = 20, cells_per_sample = 20)
     @test lattice isa Vector{Vector{Float64}} &&
         samples isa Vector{DataFrame}
-    samples, sampletumor = multi_region_sequencing(plane; n = 20, cells_per_sample = 20, stochastic = true)
+    samples, sampletumor = multi_region_sequencing(plane;
+         n = 20, cells_per_sample = 20, stochastic = true, readdepth=10)
     @test samples isa Vector{DataFrame} && sampletumor isa DataFrame
 end
 

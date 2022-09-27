@@ -95,20 +95,36 @@ end
 Birth event handler in simulation algorithm.
 At division the birth! function is called and parent or daughter may or may not gain a new mutation.
 """
-function birth!(tumor::Vector{Cell}, mutations::Vector{Mutation}, parent, cur_id, cur_mutation, μ, cellbox, t, dimv::Val{dim}) where dim
+function birth!(tumor::Vector{Cell}, mutations::Vector{Mutation}, parent, cur_id, cur_mutation, μ, cellbox, t, dimv::Val{dim}) where {dim}
 
     δ = rand(dim) .- 0.5
-    pos = parent.position + 2.1 .* δ/norm(δ)
+    pos = parent.position + 2.1 .* δ / norm(δ)
     push!(cellbox, pos2box(pos, dimv))
 
-	new = Cell(cur_id, copy(pos), copy(parent.mutations), parent.index, parent.b, t, SVector{dim,Float64}(pos))
-	push!(tumor, new)
+    new = Cell(cur_id, copy(pos), copy(parent.mutations), parent.index, parent.b, t, SVector{dim,Float64}(pos))
+    push!(tumor, new)
 
-	m1, m2 = rand(Poisson(μ/2), 2)
-	1:m1 .|> m -> push!(parent.mutations, cur_mutation+m)
-	1:m2 .|> m -> push!(new.mutations, cur_mutation+m1+m)
+    m1, m2 = rand(Poisson(μ / 2), 2)
+    ancestor_1 = isempty(parent.mutations) ? 0 : last(parent.mutations)
+    ancestor_2 = isempty(new.mutations) ? 0 : last(new.mutations)
+    for m in 1:m1
+        push!(mutations,
+            Mutation(parent.index, ancestor_1,
+                t, length(tumor), SVector{dim,Float64}(parent.position)
+            )
+        )
+        push!(parent.mutations, cur_mutation + m)
+    end
+    for m in 1:m2
+        push!(mutations,
+            Mutation(new.index, ancestor_2,
+                t, length(tumor), SVector{dim,Float64}(pos)
+            )
+        )
+        push!(new.mutations, cur_mutation + m1 + m)
+    end
 
-	return m1+m2
+    return m1 + m2
 end
 
 """
