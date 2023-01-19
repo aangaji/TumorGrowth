@@ -13,7 +13,7 @@ function birth!(tumor::Vector{Cell}, mutations::Vector{Mutation}, parent, cur_id
     for m in 1:m1
         push!(mutations, 
             Mutation(parent.index, ancestor_1,
-                t, length(tumor), SVector{dim,Float64}(parent.position)
+                t, length(tumor), SVector{0,Float64}(parent.position)
                 )  
             )
         push!(parent.mutations, cur_mutation+m)
@@ -21,7 +21,7 @@ function birth!(tumor::Vector{Cell}, mutations::Vector{Mutation}, parent, cur_id
     for m in 1:m2
         push!(mutations, 
             Mutation(new.index, ancestor_2,
-                t, length(tumor), SVector{dim,Float64}(pos)
+                t, length(tumor), SVector{0,Float64}(pos)
                 )
             )
         push!(new.mutations, cur_mutation+m1+m)
