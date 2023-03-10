@@ -35,7 +35,7 @@ end
 
 Base.in(point, c::Circle) = norm(point .- c.center) < c.r
 
-function triangular_lattice(sq::Square; n = 0, a = sqrt(π / n) * radius)
+function triangular_lattice(sq::Square; a)
     v, w = [1.0, 0.0], [0.5, -cosd(30)]
 
     steps_x = ceil(Int, sq.width / a)
@@ -43,32 +43,37 @@ function triangular_lattice(sq::Square; n = 0, a = sqrt(π / n) * radius)
 
     lattice = Matrix{Vector{Float64}}(undef, steps_x, steps_y)
     lattice[:, 1] .= [sq.anchorpoint .+ a * i * v for i = 1:steps_x]
+    print(size(lattice))
     for j = 2:steps_y
         @. lattice[:, j] = [p + a * (w - iseven(j) * v) for p in lattice[:, j-1]]
     end
     return lattice
 end
 
-function multi_region_sampling(tumor; n = 0, a = 0.0, cells_per_sample = 0, sample_r = a / 2)
+function multi_region_sampling(tumor; n = 0, a = 0.0, cells_per_sample = 0, sample_r = 0.)
 
     cm = mean(tumor.position)
-    r = mean(norm.(p .- cm for p in tumor.position))
+    r = norm(std(tumor.position))/2
     density = size(punch(tumor; pos = cm, r = r), 1) / (π * r^2)
     R = sqrt(size(tumor, 1) / (π * density))
 
-    sample_r = iszero(cells_per_sample) ? a / 2 : sqrt(cells_per_sample / (π * density))
+    if iszero(sample_r)
+        sample_r = iszero(cells_per_sample) ? a/2 : sqrt(cells_per_sample / (π * density))
+    end
     if !iszero(n)
-        a = sqrt(π / n / sind(60)) * R
+        scale = sqrt(2*pi/(sqrt(3)*n))
+        a = scale * R /( 1 + scale/2)
         sample_r = iszero(sample_r) ? a / 2 : sample_r
     elseif iszero(a)
         a = 2 * sample_r
     end
+
     iszero(sample_r) && error("specify parameters")
     sample_r > a / 2 && error("samples too large for given spacing")
 
-    square = Square(cm .- R .* (1, -1), 2 * R)
-    lattice = [triangular_lattice(square; n = n, a = a)...]
-    filter!(p -> p in Circle(Point{2}(cm), R - a / 2), lattice)
+    square = Square(cm .- (R-a/2) .* (1, -1), 2 * (R-a/2))
+    lattice = [triangular_lattice(square; a = a)...]
+    filter!(p -> p in Circle(Point{2}(cm), (R-a/2)), lattice)
 
     samples = lattice .|> p -> punch(tumor; pos = p, r = sample_r)
 
