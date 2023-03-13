@@ -1,4 +1,4 @@
-export mutation_freqs, sampletumor_mfreqs, stochastic_sequencing, multi_region_sequencing, reduced_μ, reduced_μ!, clone, clones, haplotypes, clones_by_mutations
+export mutation_freqs, sampletumor_mfreqs, stochastic_sequencing, multi_region_sequencing, reduced_mu, reduced_mu!, clone, clones, haplotypes, clones_by_mutations
 
 function mutation_freqs(tumor)
     all(isempty.(tumor.mutations)) && return DataFrame(mutation = Int[],
@@ -54,7 +54,7 @@ function multi_region_sequencing(tumor; n=0, a=0., cells_per_sample=0, sample_r=
 end
 
 
-function reduced_μ!(tumor, x)
+function reduced_mu!(tumor, x)
     reduced = vcat(tumor.mutations...) |> unique! |> sort! |>
         muts -> filter!(muts) do m
             rand()<=x
@@ -63,7 +63,7 @@ function reduced_μ!(tumor, x)
     return tumor
 end
 
-reduced_μ(tumor, x) = reduced_μ!(deepcopy(tumor), x)
+reduced_mu(tumor, x) = reduced_mu!(deepcopy(tumor), x)
 
 function haplotypes(tumor; res=0.0)
     type_muts = unique(tumor.mutations)

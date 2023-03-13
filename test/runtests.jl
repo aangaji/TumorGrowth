@@ -2,18 +2,18 @@ using Test, TumorGrowth
 
 @testset "Simulation" begin
 
-    simoutput = birth_death_pushing(100; b=1., d=0.0, μ=0.1, ρ=1., dim=2, seed=1010, showprogress=false)
+    simoutput = birth_death_pushing(100; b=1., d=0.0, mu=0.1, rho=1., dim=2, seed=1010, showprogress=false)
     @test simoutput isa Dict
     @test map((:index,:mutation,:tumor,:time)) do key
         haskey(simoutput,key)
     end |> all
     @test try
-        birth_death_pushing(100; b=1., d=1., μ=0.5, ρ=1., dim=2, seed=1010, showprogress=false)
+        birth_death_pushing(100; b=1., d=1., mu=0.5, rho=1., dim=2, seed=1010, showprogress=false)
     catch e
         e == ErrorException("Tumor died")
     end
 
-    birth_death_pushing!(simoutput[:tumor], simoutput[:mutations], length(simoutput[:tumor])+1; b=0.69, d=0.0, μ=0.3, dim=2,
+    birth_death_pushing!(simoutput[:tumor], simoutput[:mutations], length(simoutput[:tumor])+1; dim=2,
      t=simoutput[:time], cur_id=simoutput[:index], cur_mutation=simoutput[:mutation])
 
      tumor = simoutput[:tumor] |> DataFrame
@@ -21,13 +21,10 @@ using Test, TumorGrowth
          eltype(eltype(col)) <: Number
      end |> all
 
-     TumorGrowth.b_linear()
-     @test iszero(TumorGrowth.b_curve(1.1; bup=1., ρc=1.))
-     TumorGrowth.b_hill(6)
-     @test !iszero(TumorGrowth.b_curve(1.1; bup=1., ρc=1.))
-     reduced_μ!(tumor, 1/2)
+     @test iszero(TumorGrowth.b_linear(1.1; b_max=1., rho_c=1.))
+     reduced_mu!(tumor, 1/2)
 
-     tumor = birth_death_pushing(2000; b=1., d=0.0, μ=0.3, ρ=6., dim=3, seed=1234)[:tumor]
+     tumor = birth_death_pushing(2000; b=1., d=0.0, mu=0.3, rho=6., dim=3, seed=1234)[:tumor]
      TumorGrowth.CSV.write("temp.csv", DataFrame(tumor), delim=',')
      data_import("temp.csv", delim=",")
 end
@@ -46,11 +43,11 @@ end
         ], DataFrame) |> all
 
     plane = cross_section(tumor; x=0., width=3., reduce_dim=true)
-    lattice, samples, sample_r = multi_region_sampling(plane; n = 20, cells_per_sample = 20)
+    lattice, samples, sample_r = multi_region_sampling(plane; n = 20, cells_per_sample = 10)
     @test lattice isa Vector{Vector{Float64}} &&
         samples isa Vector{DataFrame}
     samples, sampletumor = multi_region_sequencing(plane;
-         n = 20, cells_per_sample = 20, stochastic = true, readdepth=10)
+         n = 20, cells_per_sample = 10, stochastic = true, readdepth=10)
     @test samples isa Vector{DataFrame} && sampletumor isa DataFrame
 end
 
@@ -71,7 +68,7 @@ end
 end
 
 @testset "Timeseries" begin
-    N, simparams... = (N=1000, b=1., d=0.0, μ=0.3, ρ=6., dim=3, seed=1234)
+    N, simparams... = (N=1000, b=1., d=0.0, mu=0.3, rho=6., dim=3, seed=1234)
     tumor = birth_death_pushing(N; simparams...)[:tumor] |> DataFrame
 
     time_series = tumor_stepper(range(0., last( tumor.t_birth), length=50); simparams...)
