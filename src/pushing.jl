@@ -1,12 +1,10 @@
-pos2box(x::Float64; w=2) = floor(Int,x/w)
-pos2box(p::Vector{Float64}, dimv::Val; w=2) = ntuple(i->pos2box(p[i];w=w), dimv)
+pos2box(x::Float64; w=1) = Int(fld(x, w)) + 500
+pos2box(p::Vector{Float64}, dimv::Val; w=1) = CartesianIndex(ntuple(i -> pos2box(p[i]; w=w), Val(2)))
 
-function find_neighbors(cellbox, root::Int; s=2)
-	bools = isneighbor.(cellbox; rootbox=cellbox[root], s=s)
-	bools[root] = false
-	return bools
+function find_neighbors(box2cell::Array{Int,dim}, cell2box, root::Int; s=2) where {dim}
+    nh = cell2box[root] .+ CartesianIndices(ntuple(i -> -s:s, Val(2)))
+    return filter(i -> !iszero(i) && i != root, box2cell[nh])
 end
-isneighbor(neighbox::NTuple{dim,Int}; rootbox::NTuple{dim,Int}, s=2) where dim = all(-s < neighbox[i] - rootbox[i] < s for i=1:dim)
 
 function pushing!(tumor, root, cellbox, dimv::Val)
     queue = [root]

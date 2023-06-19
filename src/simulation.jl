@@ -71,6 +71,19 @@ function get_birthrate(cell::Cell, neighbors; b_of_rho )
     return b_of_rho(sum(ws); b_max = cell.b, rho_c = cell.rho)
 end
 
+############################
+######---DEATH RATE---######
+
+d(r; R, del=R/4, r0=R/5, d_c=1) = del / (r + r0) + (d_c - del / (R + r0))
+
+function get_deathrate(cell::Cell, tumor::Vector{Cell})
+
+    cm  = mean(getfield.(tumor,:position))
+    R = maximum(norm(c.position-cm) for c in tumor)
+
+    return d(norm(cell.position-cm); R=R, d_c=cell.d)
+end
+
 #############################
 #######---SIMULATION---######
 
@@ -126,8 +139,11 @@ kwargs:     `cur_mutation = 0, dim, seed=nothing`
 
 To further evolve a tumor call `birth_death_pushing!` on existing `Cell` array and set kwargs `cur_id` (next cell index), `cur_mutation` (next mutation), `t` (time) appropriatly.
 """
-function birth_death_pushing!( tumor::Vector{Cell}, mutations::Vector{Mutation}, until; b_of_rho = b_linear,
-	dim=length(tumor[1].position), seed=nothing, cur_id = 1, cur_mutation = 0, t = 0.0, showprogress=true)
+function birth_death_pushing!( tumor::Vector{Cell}, mutations::Vector{Mutation}, until; 
+    b_of_rho = b_linear,
+	dim=length(tumor[1].position), seed=nothing, cur_id = 1, cur_mutation = 0, t = 0.0, 
+    # cellbox =  
+    showprogress=true)
     dimv = Val(dim)
 
     b_max = maximum(getfield.(tumor, :b))
@@ -146,7 +162,13 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutations::Vector{Mutation},
         row = rand(1:N)
         parent = tumor[row]
 
-        p = rand()*(b_max+d_max) - get_birthrate(parent, view(tumor, find_neighbors(cellbox, row; s=4)); b_of_rho=b_of_rho)
+        # b = parent.b
+        b = get_birthrate(parent, view(tumor, find_neighbors(cellbox, row; s=4)); b_of_rho=b_of_rho)
+
+        d = parent.d
+        # d = get_deathrate(parent, tumor )
+
+        p = rand() * (b_max + d_max) - b
 
         t += randexp()/((b_max+d_max)*N)
 
@@ -160,7 +182,7 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutations::Vector{Mutation},
             push!(cellbox, pos2box(last(tumor).position, dimv))
 
             pushing!(tumor, N, cellbox, dimv)
-        elseif p < parent.d
+        elseif p < d
             N -= 1
             deleteat!.( (tumor, cellbox), row)
         end
