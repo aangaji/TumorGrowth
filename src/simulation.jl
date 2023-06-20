@@ -71,6 +71,31 @@ function get_birthrate(cell::Cell, neighbors; b_of_rho )
     return b_of_rho(sum(ws); b_max = cell.b, rho_c = cell.rho)
 end
 
+############################
+######---DEATH RATE---######
+
+# d(r; R, del=10, r0=1, d_c=1) = del / (r + r0) + (d_c - del / (R + r0))
+
+d(r; del=10, R, d_c) = d_c / (1 + exp(-(R - del / 2 - r) * 10 / del))
+
+function get_deathrate(cell::Cell, tumor::Vector{Cell}; kwrgs...)
+
+    cm  = mean(getfield.(tumor,:position))
+    R = maximum(norm(c.position-cm) for c in tumor)-4
+
+    return d(norm(cell.position-cm); R=R, d_c=cell.d, kwrgs...)
+end
+
+# d_linear(rho::Float64; d_max::Float64, rho_c::Float64) = d_max* min(1, rho / rho_c)
+
+# function get_deathrate(cell::Cell, neighbors; 
+#         d_of_rho=d_linear)
+
+#     isempty(neighbors) && return 0.
+#     ws = getfield.(neighbors, :position) .|> p -> w(norm(cell.position - p); sigma=4.0)
+#     return d_of_rho(sum(ws); d_max=cell.d, rho_c=cell.rho)
+# end
+
 #############################
 #######---SIMULATION---######
 
@@ -146,11 +171,19 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutations::Vector{Mutation},
         row = rand(1:N)
         parent = tumor[row]
 
-        p = rand()*(b_max+d_max) - get_birthrate(parent, view(tumor, find_neighbors(cellbox, row; s=4)); b_of_rho=b_of_rho)
+        b = parent.b
+        # b = get_birthrate(parent, view(tumor, find_neighbors(cellbox, row; s=4)); b_of_rho=b_of_rho)
+
+        # d = parent.d
+        d = get_deathrate(parent, tumor )
+        # d = get_deathrate(parent, view(tumor, 
+        #         find_neighbors(cellbox, row; s=4)))
+
+        p = rand() * (b_max + d_max)
 
         t += randexp()/((b_max+d_max)*N)
 
-        if p < 0.
+        if p < b
             cur_id += 1
             N += 1
             cur_mutation += birth!(tumor, mutations, parent, cur_id, cur_mutation, t)
@@ -160,7 +193,7 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutations::Vector{Mutation},
             push!(cellbox, pos2box(last(tumor).position, dimv))
 
             pushing!(tumor, N, cellbox, dimv)
-        elseif p < parent.d
+        elseif p < b + d
             N -= 1
             deleteat!.( (tumor, cellbox), row)
         end
