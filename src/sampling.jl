@@ -43,7 +43,7 @@ function triangular_lattice(sq::Square; a)
 
     lattice = Matrix{Vector{Float64}}(undef, steps_x, steps_y)
     lattice[:, 1] .= [sq.anchorpoint .+ a * i * v for i = 1:steps_x]
-    print(size(lattice))
+    
     for j = 2:steps_y
         @. lattice[:, j] = [p + a * (w - iseven(j) * v) for p in lattice[:, j-1]]
     end

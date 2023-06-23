@@ -5,14 +5,16 @@ function tumor_stepper!(simresult, trange;
     isnothing(seed) || Random.seed!(seed)
     id, mut_id, t, tumor, mutations = simresult |> r -> (r[:index], r[:mutation], r[:time], r[:tumor], r[:mutations])
 
-    time_series = Vector{DataFrame}()
+    tumor_dict = Dict(getfield.(tumor,:index) .=> tumor)
+
     prog = Progress(length(trange), dt=0.01)
-    for tp in trange
-        up = birth_death_pushing!(tumor, mutations, tp; cur_id=id, cur_mutation=mut_id, t=t, showprogress=false)
-        push!(time_series, deepcopy(DataFrame(tumor)) )
+    time_series = map(trange) do tp
+        up = birth_death_pushing!(tumor_dict, mutations, tp; cur_id=id, cur_mutation=mut_id, t=t, showprogress=false)
         id, mut_id, t = up[:index], up[:mutation], up[:time]
 
         next!(prog)
+
+        DataFrame(values(tumor_dict))
     end
     return time_series
 end

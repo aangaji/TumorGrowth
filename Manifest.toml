@@ -340,7 +340,9 @@ version = "3.4.1"
 [[GLFW_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libglvnd_jll", "Pkg", "Xorg_libXcursor_jll", "Xorg_libXi_jll", "Xorg_libXinerama_jll", "Xorg_libXrandr_jll"]
 git-tree-sha1 = "d972031d28c8c8d9d7b41a536ad7bb0c2579caca"
+git-tree-sha1 = "d972031d28c8c8d9d7b41a536ad7bb0c2579caca"
 uuid = "0656b61e-2033-5cc2-a64a-77c0f6c09b89"
+version = "3.3.8+0"
 version = "3.3.8+0"
 
 [[GLMakie]]
@@ -348,6 +350,12 @@ deps = ["ColorTypes", "Colors", "FileIO", "FixedPointNumbers", "FreeTypeAbstract
 git-tree-sha1 = "25dd999ef6ad2904206f96211386535bcb86cc58"
 uuid = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 version = "0.4.7"
+
+[[GPUArraysCore]]
+deps = ["Adapt"]
+git-tree-sha1 = "2d6ca471a6c7b536127afccfa7564b5b39227fe0"
+uuid = "46192b85-c4d5-4398-a991-12ede77f4527"
+version = "0.1.5"
 
 [[GPUArraysCore]]
 deps = ["Adapt"]

@@ -104,12 +104,12 @@ end
 Birth event handler in simulation algorithm.
 At division the birth! function is called and parent or daughter may or may not gain a new mutation.
 """
-function birth!(tumor::Vector{Cell}, mutations::Vector{Mutation}, parent, cur_id, cur_mutation, t)
+function birth!(tumor::Dict{Int64,Cell}, mutations::Vector{Mutation}, parent, cur_id, cur_mutation, t)
 
     new = deepcopy(parent)
     new.index = cur_id
     new.t_birth = t
-    push!(tumor, new)
+    tumor[cur_id] = new
 
     m1, m2 = rand(Poisson(parent.mu / 2), 2)
     ancestor_1 = isempty(parent.mutations) ? 0 : last(parent.mutations)
@@ -151,33 +151,38 @@ kwargs:     `cur_mutation = 0, dim, seed=nothing`
 
 To further evolve a tumor call `birth_death_pushing!` on existing `Cell` array and set kwargs `cur_id` (next cell index), `cur_mutation` (next mutation), `t` (time) appropriatly.
 """
-function birth_death_pushing!( tumor::Vector{Cell}, mutations::Vector{Mutation}, until; b_of_rho = b_linear,
-	dim=length(tumor[1].position), seed=nothing, cur_id = 1, cur_mutation = 0, t = 0.0, showprogress=true)
+function birth_death_pushing!(tumor::Dict{Int64,Cell}, mutations::Vector{Mutation}, until;
+        b_of_rho = b_linear,
+        dim=length(first(tumor)[2].position), seed=nothing, cur_id = 1, cur_mutation = 0, t = 0.0, 
+        showprogress=true)
+
     dimv = Val(dim)
 
-    b_max = maximum(getfield.(tumor, :b))
-    d_max = maximum(getfield.(tumor, :d))
+    b_max = maximum(getfield.(values(tumor), :b))
+    d_max = maximum(getfield.(values(tumor), :d))
 
     isnothing(seed) || Random.seed!(seed)
 
     N = length(tumor)
 
-    cellbox = [pos2box(p, dimv) for p in getfield.(tumor,:position)]
+    box2cell = zeros(Int, fill(1000, dim)...)
+    for (i, cell) in tumor
+        box2cell[pos2box(cell.position, dimv)] = i
+    end
 
     prog = showprogress ? ProgressUnknown("Progress: Tumor size ") : nothing
     while loop_condition(N,t, until)
 
         N==0 && error("Tumor died")
-        row = rand(1:N)
-        parent = tumor[row]
 
-        b = parent.b
-        # b = get_birthrate(parent, view(tumor, find_neighbors(cellbox, row; s=4)); b_of_rho=b_of_rho)
+        _,parent = rand(tumor)
 
-        # d = parent.d
-        d = get_deathrate(parent, tumor )
-        # d = get_deathrate(parent, view(tumor, 
-        #         find_neighbors(cellbox, row; s=4)))
+        b = get_birthrate(
+            parent, 
+            [tumor[i] for i in find_neighbors(box2cell, parent; s=8)]; 
+            b_of_rho=b_of_rho)
+
+        d = parent.d
 
         p = rand() * (b_max + d_max)
 
@@ -187,15 +192,15 @@ function birth_death_pushing!( tumor::Vector{Cell}, mutations::Vector{Mutation},
             cur_id += 1
             N += 1
             cur_mutation += birth!(tumor, mutations, parent, cur_id, cur_mutation, t)
-            
-            del = rand(dim) .- 0.5
-            last(tumor).position = parent.position + 2.1 .* del / norm(del)
-            push!(cellbox, pos2box(last(tumor).position, dimv))
 
-            pushing!(tumor, N, cellbox, dimv)
+            del = rand(dim) .- 0.5
+            tumor[cur_id].position = parent.position + 2.1 .* del / norm(del)
+
+            pushing!(tumor, cur_id, box2cell, dimv)
         elseif p < b + d
             N -= 1
-            deleteat!.( (tumor, cellbox), row)
+            box2cell[pos2box(parent.position, dimv)] = 0
+            delete!(tumor, parent.index)
         end
         showprogress && ProgressMeter.update!(prog, N )
     end
@@ -226,12 +231,16 @@ To further evolve a tumor call `birth_death_pushing!` on existing `Cell` vector 
 """
 function birth_death_pushing( until; b, d, mu, rho=Inf, cur_mutation = 0, dim, simparams...)
 
-    tumor = [Cell(; index=1, position=zeros(Float64,dim), parent=0, mutations=collect(1:cur_mutation), b=b, d=d, mu=mu, rho=rho, t_birth=0.)]
+    tumor = Dict( 1 => Cell(; index=1, 
+        position=zeros(Float64,dim), parent=0, 
+        mutations=collect(1:cur_mutation), 
+        b=b, d=d, mu=mu, rho=rho, t_birth=0.)
+        )
 
 	mutations = [Mutation(; origin=1, ancestor=0, t_birth=0., N_birth=1) for _=1:cur_mutation]
 
     output = birth_death_pushing!(tumor, mutations, until; cur_mutation=cur_mutation, dim=dim, simparams...)
-	output[:tumor] = tumor
+	output[:tumor] = values(tumor)
 	output[:mutations] = mutations
 
 	return output
