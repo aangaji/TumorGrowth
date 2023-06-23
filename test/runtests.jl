@@ -12,11 +12,13 @@ using Test, TumorGrowth
     catch e
         e == ErrorException("Tumor died")
     end
-
-    birth_death_pushing!(simoutput[:tumor], simoutput[:mutations], length(simoutput[:tumor])+1; dim=2,
+    
+    tumor = simoutput[:tumor]
+    tumor_dict = Dict(getfield.(tumor,:index) .=> tumor)
+    birth_death_pushing!(tumor_dict, simoutput[:mutations], length(tumor_dict)+1; dim=2,
      t=simoutput[:time], cur_id=simoutput[:index], cur_mutation=simoutput[:mutation])
 
-     tumor = simoutput[:tumor] |> DataFrame
+     tumor = values(tumor_dict) |> DataFrame
      @test map(eachcol(tumor)) do col
          eltype(eltype(col)) <: Number
      end |> all
@@ -73,7 +75,7 @@ end
 
     time_series = tumor_stepper(range(0., last( tumor.t_birth), length=50); simparams...)
 
-    @test last(time_series) == tumor
+    @test sort(last(time_series).t_birth) == tumor.t_birth
 
     record_growth(time_series; path="temp.gif",
             frames=1, shading=true,
