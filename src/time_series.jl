@@ -5,7 +5,7 @@ function tumor_stepper!(simresult, trange;
     isnothing(seed) || Random.seed!(seed)
     id, mut_id, t, tumor, mutations = simresult |> r -> (r[:index], r[:mutation], r[:time], r[:tumor], r[:mutations])
 
-    tumor_dict = Dict(getfield.(tumor,:index) .=> tumor)
+    tumor_dict = Dict(getfield.(tumor, :index) .=> tumor)
 
     prog = Progress(length(trange), dt=0.01)
     time_series = map(trange) do tp
@@ -14,7 +14,7 @@ function tumor_stepper!(simresult, trange;
 
         next!(prog)
 
-        DataFrame(values(tumor_dict))
+        tumor_dict |> values |> collect |> deepcopy |> DataFrame
     end
     return time_series
 end
