@@ -73,9 +73,9 @@ end
     N, simparams... = (N=1000, b=1., d=0.0, mu=0.3, rho=6., dim=3, seed=1234)
     tumor = birth_death_pushing(N; simparams...)[:tumor] |> DataFrame
 
-    time_series = tumor_stepper(range(0., last( tumor.t_birth), length=50); simparams...)
+    time_series = tumor_stepper(range(0., maximum( tumor.t_birth), length=10); simparams...)
 
-    @test sort(last(time_series).t_birth) == tumor.t_birth
+    @test sort(last(time_series),:index) == sort(tumor,:index)
 
     record_growth(time_series; path="temp.gif",
             frames=1, shading=true,

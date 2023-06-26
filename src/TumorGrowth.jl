@@ -15,6 +15,8 @@ using Distributions
 using ProgressMeter
 println("Done!")
 
+const rmax = 800
+
 (
     "simulation.jl",
     "plotting.jl",

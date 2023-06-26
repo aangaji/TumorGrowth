@@ -109,6 +109,7 @@ function birth!(tumor::Dict{Int64,Cell}, mutations::Vector{Mutation}, parent, cu
     new = deepcopy(parent)
     new.index = cur_id
     new.t_birth = t
+    new.parent = parent.index
     tumor[cur_id] = new
 
     m1, m2 = rand(Poisson(parent.mu / 2), 2)
@@ -154,7 +155,7 @@ To further evolve a tumor call `birth_death_pushing!` on existing `Cell` array a
 function birth_death_pushing!(tumor::Dict{Int64,Cell}, mutations::Vector{Mutation}, until;
         b_of_rho = b_linear,
         dim=length(first(tumor)[2].position), seed=nothing, cur_id = 1, cur_mutation = 0, t = 0.0, 
-        showprogress=true)
+        showprogress=true,)
 
     dimv = Val(dim)
 
@@ -165,7 +166,7 @@ function birth_death_pushing!(tumor::Dict{Int64,Cell}, mutations::Vector{Mutatio
 
     N = length(tumor)
 
-    box2cell = zeros(Int, fill(1000, dim)...)
+    box2cell = zeros(Int, fill(rmax*2, dim)...)
     for (i, cell) in tumor
         box2cell[pos2box(cell.position, dimv)] = i
     end
