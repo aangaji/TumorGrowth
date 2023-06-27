@@ -76,14 +76,46 @@ end
 
 # d(r; R, del=10, r0=1, d_c=1) = del / (r + r0) + (d_c - del / (R + r0))
 
-d(r; del=10, R, d_c) = d_c / (1 + exp(-(R - del / 2 - r) * 10 / del))
+d(r; del=10., R, d_c) = d_c / (1. + exp(-(R - del / 2. - r) * 10. / del))
 
-function get_deathrate(cell::Cell, tumor::Vector{Cell}; kwrgs...)
+# function get_deathrate(cell::Cell, tumorpositions::Vector{Vector{Float64}})
 
-    cm  = mean(getfield.(tumor,:position))
-    R = maximum(norm(c.position-cm) for c in tumor)-4
+#     cm = mean(tumorpositions)
+#     R = mean(norm(p - cm)^13 for p in tumorpositions)^(1 / 13)
 
-    return d(norm(cell.position-cm); R=R, d_c=cell.d, kwrgs...)
+#     return d(norm(cell.position-cm); 
+#         R=R, d_c=cell.d, del=8.)
+# end
+
+function get_deathrate(cell::Cell,
+        tumorpositions::Vector{Vector{Float64}};
+        dim, slicew = 3)
+    cm = mean(tumorpositions)
+    p = cell.position - cm
+    r = norm(p)
+    phi = sign(p[2])*acosd(p[1] / r)
+    if dim==3
+        theta = asind(p[3]/r)
+    end
+
+    n = 0
+    R = sum(tumorpositions) do p
+        _p = p - cm
+        _r = norm(_p)
+        _phi = sign(_p[2])*acosd(_p[1] /_r)
+
+        if -slicew < _phi - phi < slicew && (
+            dim == 2 || -slicew < asind(_p[3] / _r) - theta < slicew)
+
+            n+=1
+            _r^13
+        else
+            0.
+        end
+    end
+    R = (R/n)^(1/13)
+
+    return d(r; R=R, d_c=cell.d)
 end
 
 # d_linear(rho::Float64; d_max::Float64, rho_c::Float64) = d_max* min(1, rho / rho_c)
@@ -178,12 +210,14 @@ function birth_death_pushing!(tumor::Dict{Int64,Cell}, mutations::Vector{Mutatio
 
         _,parent = rand(tumor)
 
-        b = get_birthrate(
-            parent, 
-            [tumor[i] for i in find_neighbors(box2cell, parent; s=8)]; 
-            b_of_rho=b_of_rho)
+        b = parent.b
+        # b = get_birthrate(
+        #     parent, 
+        #     [tumor[i] for i in find_neighbors(box2cell, parent; s=8)]; 
+        #     b_of_rho=b_of_rho)
 
-        d = parent.d
+        # d = parent.d
+        d = get_deathrate(parent, getfield.(values(tumor),:position), dim=dim)
 
         p = rand() * (b_max + d_max)
 
