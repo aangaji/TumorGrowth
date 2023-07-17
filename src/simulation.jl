@@ -71,25 +71,18 @@ function get_birthrate(cell::Cell, neighbors; b_of_rho )
     return b_of_rho(sum(ws); b_max = cell.b, rho_c = cell.rho)
 end
 
-############################
-######---DEATH RATE---######
+###########################################
+######---Radially dependent rates ---######
 
-# d(r; R, del=10, r0=1, d_c=1) = del / (r + r0) + (d_c - del / (R + r0))
+function rate_sigmoid(r, R; edgewidth=10.0, rate_center, rate_edge)         
+    return rate_edge - (rate_edge - rate_center) / (1.0 + exp(-(R - edgewidth / 2.0 - r) * 10.0 / edgewidth))
+end
 
-d(r; del=10., R, d_c) = d_c / (1. + exp(-(R - del / 2. - r) * 10. / del))
-
-# function get_deathrate(cell::Cell, tumorpositions::Vector{Vector{Float64}})
-
-#     cm = mean(tumorpositions)
-#     R = mean(norm(p - cm)^13 for p in tumorpositions)^(1 / 13)
-
-#     return d(norm(cell.position-cm); 
-#         R=R, d_c=cell.d, del=8.)
-# end
-
-function get_deathrate(cell::Cell,
+function get_radially_dependent_rate(
+        cell::Cell,
         tumorpositions::Vector{Vector{Float64}};
-        dim, slicew = 3)
+        dim, rate_func=rate_sigmoid, slicew=3, kwrgs...)
+        
     cm = mean(tumorpositions)
     p = cell.position - cm
     r = norm(p)
@@ -108,25 +101,15 @@ function get_deathrate(cell::Cell,
             dim == 2 || -slicew < asind(_p[3] / _r) - theta < slicew)
 
             n+=1
-            _r^13
+            _r^30
         else
             0.
         end
     end
-    R = (R/n)^(1/13)
+    R = (R/n)^(1/30)
 
-    return d(r; R=R, d_c=cell.d)
+    return rate_func(r, R; kwrgs...)
 end
-
-# d_linear(rho::Float64; d_max::Float64, rho_c::Float64) = d_max* min(1, rho / rho_c)
-
-# function get_deathrate(cell::Cell, neighbors; 
-#         d_of_rho=d_linear)
-
-#     isempty(neighbors) && return 0.
-#     ws = getfield.(neighbors, :position) .|> p -> w(norm(cell.position - p); sigma=4.0)
-#     return d_of_rho(sum(ws); d_max=cell.d, rho_c=cell.rho)
-# end
 
 #############################
 #######---SIMULATION---######
@@ -187,7 +170,7 @@ To further evolve a tumor call `birth_death_pushing!` on existing `Cell` array a
 function birth_death_pushing!(tumor::Dict{Int64,Cell}, mutations::Vector{Mutation}, until;
         b_of_rho = b_linear,
         dim=length(first(tumor)[2].position), seed=nothing, cur_id = 1, cur_mutation = 0, t = 0.0, 
-        showprogress=true,)
+        showprogress=true, bcenter)
 
     dimv = Val(dim)
 
@@ -210,14 +193,16 @@ function birth_death_pushing!(tumor::Dict{Int64,Cell}, mutations::Vector{Mutatio
 
         _,parent = rand(tumor)
 
-        b = parent.b
         # b = get_birthrate(
         #     parent, 
         #     [tumor[i] for i in find_neighbors(box2cell, parent; s=8)]; 
         #     b_of_rho=b_of_rho)
 
-        # d = parent.d
-        d = get_deathrate(parent, getfield.(values(tumor),:position), dim=dim)
+        b = N > 50 ? get_radially_dependent_rate(parent, 
+            getfield.(values(tumor), :position);
+            dim=dim, edgewidth=15.,
+            rate_func=rate_sigmoid, rate_center=bcenter, rate_edge=parent.b) : parent.b
+        d = parent.d
 
         p = rand() * (b_max + d_max)
 
